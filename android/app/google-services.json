@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1044910664251",
+    "project_id": "lapor-sekolah-e-rapor",
+    "storage_bucket": "lapor-sekolah-e-rapor.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044910664251:android:5fb614d2a4fcca08ec0a1e",
+        "android_client_info": {
+          "package_name": "com.example.laporsekolaherapor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPEB2XNDEkxxhNIomrYZ1y9FDjSZAKB0o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

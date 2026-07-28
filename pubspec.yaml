@@ -1,0 +1,68 @@
+name: laporsekolaherapor
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  supabase_flutter: ^2.15.3
+  shared_preferences: ^2.3.2
+  cupertino_icons: ^1.0.8
+  url_launcher: ^6.3.1
+  file_picker: ^11.0.2
+  # Excel library community fork
+  excel_community: ^2.1.4
+  intl: ^0.20.3
+  image: ^4.5.2
+  pdf: ^3.13.0
+  printing: ^5.15.0
+  path_provider: ^2.1.5
+  http: ^1.2.2
+  mobile_scanner: ^7.2.0
+  qr_flutter: ^4.1.0
+  permission_handler: ^12.0.3
+  screenshot: ^3.0.0
+  gal: ^2.3.2
+  onesignal_flutter: ^5.6.3
+  fl_chart: ^0.70.2
+  audioplayers: ^6.8.1
+  flutter_local_notifications: ^22.0.1
+  image_picker: ^1.2.3
+  google_fonts: ^6.2.1
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+  flutter_lints: ^5.0.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/logo.png"
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logo.png
+    - assets/buku.png
+    - assets/planet.png
+    - assets/roket.png
+    - assets/mesjid.png
+    - assets/pahlawan.png
+    - assets/famly.png
+    - assets/keluarga.png
+    - assets/alquran.png
+    - assets/logo1.png
+    - assets/ping.mp3
+    - assets/logo_sekolah.png
+    - assets/tk-it.png
