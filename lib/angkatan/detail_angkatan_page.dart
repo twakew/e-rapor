@@ -138,13 +138,13 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
     if (isMobile) {
       return Column(
         children: [
-          SizedBox(width: double.infinity, child: _statCard('Total Siswa', total.toString(), 'Siswa', Icons.groups_rounded, primaryBlue)),
+          SizedBox(width: double.infinity, child: _statCard('Total Siswa', total.toString(), 'Siswa', Icons.groups_rounded, primaryBlue, isMobile)),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _statCard('Aktif', aktif.toString(), 'Siswa', Icons.person_outline, primaryTeal)),
+              Expanded(child: _statCard('Aktif', aktif.toString(), 'Siswa', Icons.person_outline, primaryTeal, isMobile)),
               const SizedBox(width: 12),
-              Expanded(child: _statCard('Lulus', lulus.toString(), 'Alumni', Icons.school_outlined, Colors.green)),
+              Expanded(child: _statCard('Lulus', lulus.toString(), 'Alumni', Icons.school_outlined, Colors.green, isMobile)),
             ],
           ),
         ],
@@ -153,18 +153,18 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
 
     return Row(
       children: [
-        Expanded(child: _statCard('Total Siswa', total.toString(), 'Siswa', Icons.groups_rounded, primaryBlue)),
+        Expanded(child: _statCard('Total Siswa', total.toString(), 'Siswa', Icons.groups_rounded, primaryBlue, isMobile)),
         const SizedBox(width: 16),
-        Expanded(child: _statCard('Siswa Aktif', aktif.toString(), 'Siswa', Icons.person_outline, primaryTeal)),
+        Expanded(child: _statCard('Siswa Aktif', aktif.toString(), 'Siswa', Icons.person_outline, primaryTeal, isMobile)),
         const SizedBox(width: 16),
-        Expanded(child: _statCard('Alumni Lulus', lulus.toString(), 'Siswa', Icons.school_outlined, Colors.green)),
+        Expanded(child: _statCard('Alumni Lulus', lulus.toString(), 'Siswa', Icons.school_outlined, Colors.green, isMobile)),
       ],
     );
   }
 
-  Widget _statCard(String label, String value, String unit, IconData icon, Color color) {
+  Widget _statCard(String label, String value, String unit, IconData icon, Color color, bool isMobile) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -175,24 +175,41 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(isMobile ? 8 : 12),
             decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: isMobile ? 18 : 24),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: isMobile ? 8 : 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(label, style: TextStyle(fontSize: 12, color: textSecondary, fontWeight: FontWeight.w500)),
+                Text(
+                  label, 
+                  style: TextStyle(fontSize: isMobile ? 10 : 12, color: textSecondary, fontWeight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textDark)),
+                    Flexible(
+                      child: Text(
+                        value, 
+                        style: TextStyle(fontSize: isMobile ? 16 : 20, fontWeight: FontWeight.bold, color: textDark),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     const SizedBox(width: 4),
-                    Text(unit, style: TextStyle(fontSize: 12, color: textMuted)),
+                    Text(
+                      unit, 
+                      style: TextStyle(fontSize: isMobile ? 10 : 12, color: textMuted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ],
@@ -330,10 +347,11 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
 
     final bool isAdmin = widget.userRole == 'Admin' || widget.userRole == 'Guru' || widget.userRole == 'Super Admin';
     final bool isOwnProfile = widget.studentNis == nis;
+    final bool canAccess = isAdmin || isOwnProfile;
 
     return InkWell(
       onTap: () {
-        if (!isAdmin && !isOwnProfile) {
+        if (!canAccess) {
           NotificationHelper.show(context, 'Hanya bisa melihat profil Anda sendiri', isError: true);
           return;
         }
@@ -376,25 +394,24 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '$cls • $nis',
+                    '$cls • ${canAccess ? nis : '••••••••'}',
                     style: TextStyle(fontSize: 12, color: textSecondary),
                   ),
                 ],
               ),
             ),
-            _actionBtn(Icons.visibility_outlined, const Color(0xFF3B82F6), onTap: () {
-              if (!isAdmin && !isOwnProfile) {
-                NotificationHelper.show(context, 'Hanya bisa melihat profil Anda sendiri', isError: true);
-                return;
-              }
-              if (widget.onNavigate != null) {
-                widget.onNavigate!(15, student: student);
-              } else {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => DetailSiswaPage(student: student, userRole: widget.userRole, studentNis: widget.studentNis)));
-              }
-            }),
-            const SizedBox(width: 8),
-            Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+            if (canAccess) ...[
+              _actionBtn(Icons.visibility_outlined, const Color(0xFF3B82F6), onTap: () {
+                if (widget.onNavigate != null) {
+                  widget.onNavigate!(15, student: student);
+                } else {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => DetailSiswaPage(student: student, userRole: widget.userRole, studentNis: widget.studentNis)));
+                }
+              }),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+            ] else
+              Icon(Icons.lock_outline_rounded, color: textMuted.withValues(alpha: 0.5), size: 18),
           ],
         ),
       ),

@@ -355,6 +355,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
             'image_url': finalUrls.join(','),
             'semester': widget.initialSemester ?? 1,
             'report_date': _reportDate.toIso8601String(),
+            'is_published': false, // Selalu simpan sebagai Draft dulu
             'created_at': DateTime.now().toIso8601String(),
           });
         }

@@ -286,7 +286,10 @@ class RaporPdfGenerator {
         }
       }
 
-      mainWidgets.add(pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: catSection));
+      mainWidgets.add(pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start, 
+        children: catSection,
+      ));
     }
 
     // --- Tabel Materi & Unggulan tetap sama ---
@@ -299,25 +302,29 @@ class RaporPdfGenerator {
     final hdM = getMaterial("Hadits-Hadits", "- Hadits Jangan Marah\n- Hadits Kasih Sayang\n- Hadits Adab Makan\n- Hadits Bersaudara\n- Hadits Tersenyum\n- Hadits Suka Memberi");
 
     mainWidgets.add(pw.SizedBox(height: 20));
-    mainWidgets.add(pw.Table(border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5), defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle, columnWidths: {0: const pw.FixedColumnWidth(30), 1: const pw.FlexColumnWidth(2), 2: const pw.FlexColumnWidth(3)}, children: [
-        pw.TableRow(decoration: const pw.BoxDecoration(color: PdfColors.orange100), children: [
-          pw.Padding(padding: const pw.EdgeInsets.all(8), child: mosqueImg != null ? pw.Center(child: pw.Image(mosqueImg, width: 20, height: 20)) : pw.Center(child: pw.Text("No", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)))),
-          _p("PROGRAM UNGGULAN & MATERI", isBold: true),
-          _p("CAPAIAN / NARASI", isBold: true)
-        ]),
-        _tRow("1", "Qiroati", qM, _getD(grouped, "Qiro'ati", qM)),
-        _tRow("2", "Ibadah", iM, _getD(grouped, "Ibadah", iM)),
-        _tRow("3", "Pendidikan Aqidah", aM, _getD(grouped, "Pendidikan Aqidah", aM)),
-        _tRow("4", "Bahasa Arab", bM, _getD(grouped, "Bahasa Arab", bM)),
-        pw.TableRow(decoration: const pw.BoxDecoration(color: PdfColors.orange100), children: [
-          pw.Padding(padding: const pw.EdgeInsets.all(8), child: quranImg != null ? pw.Center(child: pw.Image(quranImg, width: 20, height: 20)) : pw.Text("")),
-          _p("TAHFIDZ", isBold: true, center: true),
-          _p("CATATAN PERKEMBANGAN", isBold: true, center: true)
-        ]),
-        _tRow("1", "Al-Qur'an", alM, _getD(grouped, "Al-Qur'an", alM)),
-        _tRow("2", "Do'a-Do'a", doM, _getD(grouped, "Do'a-Do'a", doM)),
-        _tRow("3", "Hadits-Hadits", hdM, _getD(grouped, "Hadits-Hadits", hdM)),
-      ]));
+    mainWidgets.add(pw.Table(
+        border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5), 
+        defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle, 
+        columnWidths: {0: const pw.FixedColumnWidth(30), 1: const pw.FlexColumnWidth(2), 2: const pw.FlexColumnWidth(3)}, 
+        children: [
+      pw.TableRow(decoration: const pw.BoxDecoration(color: PdfColors.orange100), children: [
+        pw.Padding(padding: const pw.EdgeInsets.all(8), child: mosqueImg != null ? pw.Center(child: pw.Image(mosqueImg, width: 20, height: 20)) : pw.Center(child: pw.Text("No", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)))),
+        _p("PROGRAM UNGGULAN & MATERI", isBold: true),
+        _p("CAPAIAN / NARASI", isBold: true)
+      ]),
+      _tRow("1", "Qiroati", qM, _getD(grouped, "Qiro'ati", qM)),
+      _tRow("2", "Ibadah", iM, _getD(grouped, "Ibadah", iM)),
+      _tRow("3", "Pendidikan Aqidah", aM, _getD(grouped, "Pendidikan Aqidah", aM)),
+      _tRow("4", "Bahasa Arab", bM, _getD(grouped, "Bahasa Arab", bM)),
+      pw.TableRow(decoration: const pw.BoxDecoration(color: PdfColors.orange100), children: [
+        pw.Padding(padding: const pw.EdgeInsets.all(8), child: quranImg != null ? pw.Center(child: pw.Image(quranImg, width: 20, height: 20)) : pw.Text("")),
+        _p("TAHFIDZ", isBold: true, center: true),
+        _p("CATATAN PERKEMBANGAN", isBold: true, center: true)
+      ]),
+      _tRow("1", "Al-Qur'an", alM, _getD(grouped, "Al-Qur'an", alM)),
+      _tRow("2", "Do'a-Do'a", doM, _getD(grouped, "Do'a-Do'a", doM)),
+      _tRow("3", "Hadits-Hadits", hdM, _getD(grouped, "Hadits-Hadits", hdM)),
+    ]));
 
     mainWidgets.add(pw.SizedBox(height: 30));
     final List<pw.Widget> refleksiContent = [];

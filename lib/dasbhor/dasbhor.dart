@@ -82,20 +82,24 @@ class _DasbhorPageState extends State<DasbhorPage> {
   bool _isSidebarCollapsed = false;
   
   DateTime? _lastQuitTime;
+  String _userDisplayName = '';
   late Timer _timer;
   DateTime _currentTime = DateTime.now();
   final List<StreamSubscription> _statsSubscriptions = [];
   StreamSubscription? _schoolSubscription;
+  StreamSubscription? _profileSubscription;
 
   @override
   void initState() {
     super.initState();
     initializeDateFormatting('id_ID', null);
-    _userRole = widget.initialRole ?? (user?.email == 'triandre980@gmail.com' ? 'Admin' : 'User');
+    // Role selalu ditentukan dari hasil login/splash (role DB), bukan dari email.
+    _userRole = widget.initialRole ?? 'User';
     _fetchStats();
     _fetchSchoolInfo(); 
     _setupRealtimeStats();
     _setupSchoolRealtime();
+    _setupProfileListener();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
@@ -109,6 +113,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
   void dispose() {
     _timer.cancel();
     _schoolSubscription?.cancel();
+    _profileSubscription?.cancel();
     for (var sub in _statsSubscriptions) {
       sub.cancel();
     }
@@ -169,7 +174,52 @@ class _DasbhorPageState extends State<DasbhorPage> {
     }
   }
 
+  void _setupProfileListener() {
+    final currentUser = supabase.auth.currentUser;
+    
+    // Initial value
+    setState(() {
+      _userDisplayName = widget.studentName ?? (_userRole == 'Admin' ? 'Admin' : 'User');
+    });
+
+    if (currentUser != null && (_userRole == 'Admin' || _userRole == 'Guru')) {
+      // Listen to profile table for Admin/Guru
+      _profileSubscription = supabase
+          .from('profiles')
+          .stream(primaryKey: ['id'])
+          .eq('id', currentUser.id)
+          .listen((data) {
+            if (mounted && data.isNotEmpty) {
+              setState(() {
+                _userDisplayName = data.first['full_name'] ?? (_userRole == 'Admin' ? 'Admin' : 'Guru');
+              });
+            }
+          });
+    } else if (widget.studentNis != null) {
+      // Listen to students table for Login via NIS
+      _profileSubscription = supabase
+          .from('students')
+          .stream(primaryKey: ['id'])
+          .eq('nis', widget.studentNis!)
+          .listen((data) {
+            if (mounted && data.isNotEmpty) {
+              setState(() {
+                _userDisplayName = data.first['name'] ?? 'Siswa';
+              });
+            }
+          });
+    }
+  }
+
   Future<void> _fetchStats() async {
+    if (_userRole == 'User') {
+      await _fetchStatsForUser();
+    } else {
+      await _fetchStatsForAdmin();
+    }
+  }
+
+  Future<void> _fetchStatsForAdmin() async {
     try {
       final siswa = await supabase.from('students').select('name').eq('status', 'Aktif');
       if (mounted) setState(() => _totalSiswa = (siswa as List).length);
@@ -192,6 +242,51 @@ class _DasbhorPageState extends State<DasbhorPage> {
     } catch (e) { debugPrint('Dokumentasi fetch error: $e'); }
   }
 
+  Future<void> _fetchStatsForUser() async {
+    // 1. Fetch Students & Classes from Summary RPC
+    try {
+      final List<dynamic> stats = await supabase.rpc('get_student_stats_summary');
+      int totalAktif = 0;
+      Set<String> uniqueClasses = {};
+      
+      for (var item in stats) {
+        int total = int.tryParse(item['total_count']?.toString() ?? '0') ?? 0;
+        int lulus = int.tryParse(item['lulus_count']?.toString() ?? '0') ?? 0;
+        totalAktif += (total - lulus);
+        
+        String className = item['class_name']?.toString() ?? '';
+        if (className.isNotEmpty) uniqueClasses.add(className);
+      }
+      
+      if (mounted) {
+        setState(() {
+          _totalSiswa = totalAktif;
+          _totalKelas = uniqueClasses.length;
+        });
+      }
+    } catch (e) {
+      debugPrint('User Student Stats RPC error: $e');
+    }
+
+    // 2. Fetch Teachers from Public RPC
+    try {
+      final response = await supabase.rpc('get_public_teachers');
+      if (mounted && response != null) {
+        setState(() => _totalGuru = (response as List).length);
+      }
+    } catch (e) {
+      debugPrint('User Teacher RPC error: $e');
+    }
+
+    // 3. Fetch Documentation (Assuming RLS allows read for all)
+    try {
+      final dok = await supabase.from('documentation').select('id');
+      if (mounted) setState(() => _totalDokumentasi = (dok as List).length);
+    } catch (e) { 
+      debugPrint('User Documentation fetch error: $e'); 
+    }
+  }
+
   Future<void> _fetchKelasFromStudents() async {
     try {
       final students = await supabase.from('students').select('class');
@@ -209,7 +304,6 @@ class _DasbhorPageState extends State<DasbhorPage> {
 
   @override
   Widget build(BuildContext context) {
-    String displayName = widget.studentName ?? (_userRole == 'Admin' ? 'Admin' : 'User');
     double screenWidth = MediaQuery.of(context).size.width;
     bool isDesktop = screenWidth > 1100;
 
@@ -257,14 +351,14 @@ class _DasbhorPageState extends State<DasbhorPage> {
         bottomNavigationBar: (!isDesktop && !isGalleryMode) ? _buildBottomNav() : null,
         body: Row(
           children: [
-            if (isDesktop && !isGalleryMode) _buildSidebar(displayName),
+            if (isDesktop && !isGalleryMode) _buildSidebar(_userDisplayName),
             Expanded(
               child: Column(
                 children: [
                   if (!isGalleryMode)
-                    _buildTopBar(displayName, isDesktop),
+                    _buildTopBar(_userDisplayName, isDesktop),
                   Expanded(
-                    child: _buildCurrentPage(screenWidth, isDesktop, displayName),
+                    child: _buildCurrentPage(screenWidth, isDesktop, _userDisplayName),
                   ),
                 ],
               ),
@@ -396,7 +490,9 @@ class _DasbhorPageState extends State<DasbhorPage> {
     
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
+      curve: Curves.fastOutSlowIn,
       width: width,
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: sidebarBg,
         border: Border(right: BorderSide(color: Colors.grey.shade100)),
@@ -405,7 +501,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: effectivelyCollapsed ? 8 : 20, vertical: 24),
+            padding: EdgeInsets.symmetric(horizontal: effectivelyCollapsed ? 8 : 20, vertical: 20),
             child: Row(
               mainAxisAlignment: effectivelyCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
               children: [
@@ -428,7 +524,12 @@ class _DasbhorPageState extends State<DasbhorPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Text(_schoolSub, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                        Text(
+                          _schoolSub, 
+                          style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
                     ),
                   ),
@@ -449,7 +550,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
                   _sidebarItem(Icons.group_outlined, 'Data Siswa', 1, isOtherActive: (_selectedIndex == 15 && _detailSiswaReturnIndex == 1) || _selectedIndex == 10, isCollapsedOverride: effectivelyCollapsed),
                   _sidebarItem(Icons.person_outline, 'Data Guru', 28, isOtherActive: _selectedIndex == 16 || _selectedIndex == 11, isCollapsedOverride: effectivelyCollapsed),
                   _sidebarItem(Icons.business_outlined, 'Data Kelas', 12, isOtherActive: _selectedIndex == 17 || (_selectedIndex == 15 && _detailSiswaReturnIndex == 17), isCollapsedOverride: effectivelyCollapsed),
-                  _sidebarItem(Icons.edit_note_outlined, 'Penilaian', 3, isCollapsedOverride: effectivelyCollapsed),
+                  if (_userRole != 'User') _sidebarItem(Icons.edit_note_outlined, 'Penilaian', 3, isCollapsedOverride: effectivelyCollapsed),
                   _sidebarItem(Icons.picture_as_pdf_outlined, 'E-Rapor PDF', 13, isCollapsedOverride: effectivelyCollapsed),
 
                   _sidebarItem(Icons.school_outlined, 'Data Angkatan', 6, isCollapsedOverride: effectivelyCollapsed),
@@ -461,17 +562,13 @@ class _DasbhorPageState extends State<DasbhorPage> {
             ),
           ),
           if (!effectivelyCollapsed)
-            Transform.translate(
-              offset: const Offset(0, 25), // Geser lebih bawah agar menempel/duduk di garis
-              child: Opacity(
-                opacity: 0.9,
-                child: Image.asset(
-                  'assets/tk-it.png',
-                  width: width,
-                  height: 140, // Ukuran dikembalikan agak besar tapi pas
-                  fit: BoxFit.contain,
-                  alignment: Alignment.bottomCenter,
-                ),
+            Opacity(
+              opacity: 0.9,
+              child: Image.asset(
+                'assets/tk-it.png',
+                height: 100,
+                fit: BoxFit.contain,
+                alignment: Alignment.bottomCenter,
               ),
             ),
           _buildSidebarFooter(isCollapsedOverride: effectivelyCollapsed),
@@ -571,12 +668,12 @@ class _DasbhorPageState extends State<DasbhorPage> {
   Widget _buildSidebarFooter({bool? isCollapsedOverride}) {
     bool collapsed = isCollapsedOverride ?? _isSidebarCollapsed;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 16, vertical: 14),
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: Colors.grey.shade100)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: collapsed ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (!collapsed)
@@ -584,9 +681,11 @@ class _DasbhorPageState extends State<DasbhorPage> {
               child: Text(
                 '© $_academicYear TK IT AL-HANIF LEDENG',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
                   fontSize: 9, 
-                  color: const Color(0xFF94A3B8), 
+                  color: Color(0xFF94A3B8), 
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.2,
                 ),
@@ -620,6 +719,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
         return DataSiswaPage(
           studentNis: widget.studentNis,
           studentClass: widget.studentClass,
+          userRole: _userRole,
           isEmbedded: true,
           userName: displayName,
           onNavigate: (index, {student}) {
@@ -637,6 +737,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
         return _buildMenuPage();
       case 28:
         return DataGuruPage(
+          userRole: _userRole,
           isEmbedded: true,
           onNavigate: (index, {teacher}) {
             setState(() {
@@ -717,6 +818,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
       case 7:
         return DataSekolahPage(
           isEmbedded: true,
+          userRole: _userRole,
           onNavigate: (index, {schoolData}) {
             setState(() {
               _selectedIndex = index;
@@ -774,6 +876,9 @@ class _DasbhorPageState extends State<DasbhorPage> {
         );
       case 12:
         return DataKelasPage(
+          studentNis: widget.studentNis,
+          studentClass: widget.studentClass,
+          userRole: _userRole,
           isEmbedded: true,
           onNavigate: (index, {classData}) {
             setState(() {
@@ -787,6 +892,8 @@ class _DasbhorPageState extends State<DasbhorPage> {
       case 17:
         return DetailKelasPage(
           classData: _activeClassData ?? {},
+          userRole: _userRole,
+          studentNis: widget.studentNis,
           isEmbedded: true,
           onNavigate: (index, {student}) {
             setState(() {
@@ -811,7 +918,10 @@ class _DasbhorPageState extends State<DasbhorPage> {
           },
         );
       case 13:
-        return const DownloadPdfPage();
+        return DownloadPdfPage(
+          studentNis: widget.studentNis,
+          userRole: _userRole,
+        );
       case 15:
         return DetailSiswaPage(
           student: _activeStudentData,
@@ -864,7 +974,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
       {'icon': Icons.people_rounded, 'label': 'Data Siswa', 'index': 1, 'color': const Color(0xFF10B981)},
       {'icon': Icons.person_rounded, 'label': 'Data Guru', 'index': 28, 'color': const Color(0xFF3B82F6)},
       {'icon': Icons.business_rounded, 'label': 'Data Kelas', 'index': 12, 'color': const Color(0xFF8B5CF6)},
-      {'icon': Icons.edit_note_rounded, 'label': 'Penilaian', 'index': 3, 'color': const Color(0xFFEC4899)},
+      if (_userRole != 'User') {'icon': Icons.edit_note_rounded, 'label': 'Penilaian', 'index': 3, 'color': const Color(0xFFEC4899)},
       {'icon': Icons.picture_as_pdf_rounded, 'label': 'E-Rapor PDF', 'index': 13, 'color': const Color(0xFFF43F5E)},
       {'icon': Icons.school_rounded, 'label': 'Data Angkatan', 'index': 6, 'color': const Color(0xFFF59E0B)},
       {'icon': Icons.collections_rounded, 'label': 'Dokumentasi', 'index': 4, 'color': const Color(0xFF06B6D4)},
@@ -1354,7 +1464,8 @@ class _DasbhorPageState extends State<DasbhorPage> {
               _bottomNavItem(Icons.home_rounded, 'Home', 0),
               _bottomNavItem(Icons.people_rounded, 'Siswa', 1),
               const SizedBox(width: 60), // Space for the standout Menu button
-              _bottomNavItem(Icons.edit_note_rounded, 'Nilai', 3),
+              if (_userRole == 'User') _bottomNavItem(Icons.fact_check_rounded, 'Absen', 5),
+              if (_userRole != 'User') _bottomNavItem(Icons.edit_note_rounded, 'Nilai', 3),
               _bottomNavItem(Icons.camera_alt_rounded, 'Dok', 4),
             ],
           ),

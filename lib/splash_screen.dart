@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'login&register/loginpath.dart';
 import 'dasbhor/dasbhor.dart';
 
@@ -44,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       curve: const Interval(0.0, 0.8, curve: Curves.easeOutBack),
     );
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.06).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
@@ -71,24 +72,23 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     // JIKA ADA SESI SUPABASE (ADMIN/GURU)
     if (session != null) {
       final user = session.user;
-      if (user.email == 'triandre980@gmail.com') {
-        detectedRole = 'Admin';
-      } else {
-        try {
-          final data = await supabase
-              .from('profiles')
-              .select('role, is_verified')
-              .eq('id', user.id)
-              .maybeSingle();
-          if (data != null && data['is_verified'] == true) {
-            detectedRole = data['role'];
-          } else {
-            // Jika akun belum diverifikasi, paksa sign out agar balik ke login
-            await supabase.auth.signOut();
-          }
-        } catch (e) {
-          debugPrint('Error pre-fetching role: $e');
+      try {
+        final data = await supabase
+            .from('profiles')
+            .select('role, is_verified')
+            .eq('id', user.id)
+            .maybeSingle();
+        if (data != null && data['is_verified'] == true) {
+          // Normalisasi Super Admin -> Admin supaya UI konsisten
+          detectedRole = data['role'].toString() == 'Super Admin'
+              ? 'Admin'
+              : data['role'].toString();
+        } else {
+          // Jika akun belum diverifikasi, paksa sign out agar balik ke login
+          await supabase.auth.signOut();
         }
+      } catch (e) {
+        debugPrint('Error pre-fetching role: $e');
       }
     } 
     // JIKA TIDAK ADA SESI TAPI ADA DATA SISWA (USER)
@@ -126,97 +126,187 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       body: Stack(
         children: [
-          // Background Gradient yang Mewah
+          // Background Gradient Deep Indigo matching AppColors
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
                 colors: [
-                  Colors.blue.shade900,
-                  Colors.blue.shade800,
-                  Colors.blue.shade600,
+                  Color(0xFF1E1B4B), // Deep Indigo 950
+                  Color(0xFF312E81), // Indigo 900
+                  AppColors.primary, // Indigo 600 (#4F46E5)
                 ],
               ),
             ),
           ),
-          
-          // Dekorasi Lingkaran Abstrak
+
+          // Glowing Ambient Orbs
           Positioned(
-            top: -100,
-            right: -100,
-            child: CircleAvatar(
-              radius: 150,
-              backgroundColor: Colors.white.withValues(alpha: 0.05),
+            top: -size.width * 0.3,
+            right: -size.width * 0.2,
+            child: Container(
+              width: size.width * 0.8,
+              height: size.width * 0.8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.secondary.withValues(alpha: 0.15),
+              ),
             ),
           ),
           Positioned(
-            bottom: -50,
-            left: -50,
-            child: CircleAvatar(
-              radius: 100,
-              backgroundColor: Colors.white.withValues(alpha: 0.05),
+            bottom: -size.width * 0.25,
+            left: -size.width * 0.2,
+            child: Container(
+              width: size.width * 0.7,
+              height: size.width * 0.7,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.05),
+              ),
             ),
           ),
 
-          Center(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Logo dengan Efek Denyut (Pulse)
-                    ScaleTransition(
-                      scale: _pulseAnimation,
-                      child: Container(
-                        padding: const EdgeInsets.all(25),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 30,
-                              offset: const Offset(0, 10),
-                            )
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.school_rounded,
-                          size: 80,
-                          color: Colors.blue.shade800,
-                        ),
+          // Main Center Content
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // App Category Pill Tag
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.school_outlined, color: Colors.amberAccent, size: 16),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Aplikasi e-Rapor Digital',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Logo Container with Pulse Animation & Glassmorphic Glow
+                          ScaleTransition(
+                            scale: _pulseAnimation,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.3),
+                                    Colors.white.withValues(alpha: 0.05),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.25),
+                                      blurRadius: 36,
+                                      offset: const Offset(0, 12),
+                                    ),
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(alpha: 0.4),
+                                      blurRadius: 20,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Hero(
+                                    tag: 'app_logo',
+                                    child: Icon(
+                                      Icons.school_rounded,
+                                      size: 64,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // App Title & Subtitle
+                          const Text(
+                            'LAPOR SEKOLAH',
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 3.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Sistem Informasi Hasil Belajar Digital',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.8),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 36),
+
+                          // Loading Dots Indicator
+                          const _ThreeDotsLoader(),
+                          const SizedBox(height: 28),
+
+                          // Version Footer
+                          Text(
+                            'v1.0.0 • e-Rapor Mobile System',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.5),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 30),
-                    // Teks Judul
-                    const Text(
-                      'LAPOR SEKOLAH',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 3,
-                      ),
-                    ),
-                    Text(
-                      'e-Rapor Digital',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.8),
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 60),
-                    // Loading Indicator Modern - Tiga Titik Berdenyut
-                    const _ThreeDotsLoader(),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -285,7 +375,7 @@ class _ThreeDotsLoaderState extends State<_ThreeDotsLoader> with SingleTickerPro
                   boxShadow: [
                     if (opacity > 0.7)
                       BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withValues(alpha: 0.4),
                         blurRadius: 8,
                         spreadRadius: 2,
                       )

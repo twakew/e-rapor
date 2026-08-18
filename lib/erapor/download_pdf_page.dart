@@ -9,7 +9,9 @@ import 'detail_rapor_page.dart';
 import '../utils/rapor_pdf_generator.dart';
 
 class DownloadPdfPage extends StatefulWidget {
-  const DownloadPdfPage({super.key});
+  final String? studentNis;
+  final String? userRole;
+  const DownloadPdfPage({super.key, this.studentNis, this.userRole});
 
   @override
   State<DownloadPdfPage> createState() => _DownloadPdfPageState();
@@ -28,6 +30,12 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
   String _dlBatch = 'Semua';
   String _dlClass = 'Semua';
   String _dlRombel = 'Semua';
+
+  // Filter for Publishing
+  String _pbBatch = 'Semua';
+  String _pbClass = 'Semua';
+  String _pbRombel = 'Semua';
+  int _pbSemester = 1;
 
   // Modern Color Palette
   final Color primaryTeal = AppColors.primary;
@@ -68,7 +76,12 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
       
       var query = supabase
           .from('assessments')
-          .select('*, students(*)');
+          .select('*, students!inner(*)');
+      
+      if (widget.userRole == 'User' && widget.studentNis != null) {
+        // Filter super ketat: Hanya yang NIS-nya cocok DAN statusnya sudah Published
+        query = query.eq('students.nis', widget.studentNis!.trim()).eq('is_published', true);
+      }
       
       if (_selectedSemester == 1) {
         query = query.or('semester.eq.1,semester.is.null');
@@ -275,14 +288,146 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
               tooltip: 'Download Terpilih',
             )
           else if (studentIds.isNotEmpty)
-            IconButton(
-              onPressed: _showDownloadFilterSheet,
-              icon: Icon(Icons.download_for_offline_outlined, color: primaryTeal, size: 28),
-              tooltip: 'Download Semua',
+            Row(
+              children: [
+                if (widget.userRole != 'User') ...[
+                  IconButton(
+                    onPressed: _showPublishSheet,
+                    icon: Icon(Icons.send_rounded, color: primaryTeal, size: 24),
+                    tooltip: 'Kirim ke Akun User',
+                  ),
+                  IconButton(
+                    onPressed: _showDownloadFilterSheet,
+                    icon: Icon(Icons.download_for_offline_outlined, color: primaryTeal, size: 28),
+                    tooltip: 'Download Semua',
+                  ),
+                ],
+              ],
             ),
         ],
       ),
     );
+  }
+
+  void _showPublishSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          final allStudents = _groupedHistory.values.map((v) => v['student'] as Map<String, dynamic>).toList();
+          
+          final batches = ['Semua', ...allStudents.map((s) => (s['batch'] ?? '').toString()).where((a) => a.isNotEmpty).toSet().toList()..sort()];
+          
+          final tempForClass = allStudents.where((s) => _pbBatch == 'Semua' || s['batch'] == _pbBatch).toList();
+          final classes = ['Semua', ...tempForClass.map((s) => (s['class'] ?? '').toString()).where((c) => c.isNotEmpty).toSet().toList()..sort()];
+          if (!classes.contains(_pbClass)) _pbClass = 'Semua';
+
+          final tempForRombel = tempForClass.where((s) => _pbClass == 'Semua' || s['class'] == _pbClass).toList();
+          final rombels = ['Semua', ...tempForRombel.map((s) => (s['rombel'] ?? '').toString()).where((r) => r.isNotEmpty).toSet().toList()..sort()];
+          if (!rombels.contains(_pbRombel)) _pbRombel = 'Semua';
+
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+                const SizedBox(height: 24),
+                Text('Kirim Rapor ke User', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryTeal)),
+                const SizedBox(height: 8),
+                Text('Rapor yang dikirim akan dapat dilihat oleh Siswa/Orang Tua.', style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                const SizedBox(height: 24),
+
+                _dlLabel('Angkatan'),
+                _dlDropdown(batches, _pbBatch, (v) => setSheetState(() => _pbBatch = v!)),
+                
+                const SizedBox(height: 16),
+                _dlLabel('Kelas'),
+                _dlDropdown(classes, _pbClass, (v) => setSheetState(() => _pbClass = v!)),
+                
+                const SizedBox(height: 16),
+                _dlLabel('Rombel'),
+                _dlDropdown(rombels, _pbRombel, (v) => setSheetState(() => _pbRombel = v!)),
+
+                const SizedBox(height: 16),
+                _dlLabel('Semester'),
+                _dlDropdown(['1', '2'], _pbSemester.toString(), (v) => setSheetState(() => _pbSemester = int.parse(v!))),
+                
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await _publishReports();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryTeal,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    child: const Text('PUBLIKASIKAN RAPOR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _publishReports() async {
+    setState(() => _isLoading = true);
+    try {
+      // 1. Get filtered student IDs
+      final filteredIds = _groupedHistory.entries
+        .where((e) {
+          final s = e.value['student'];
+          final matchesBatch = _pbBatch == 'Semua' || s['batch'] == _pbBatch;
+          final matchesClass = _pbClass == 'Semua' || s['class'] == _pbClass;
+          final matchesRombel = _pbRombel == 'Semua' || s['rombel'] == _pbRombel;
+          return matchesBatch && matchesClass && matchesRombel;
+        })
+        .map((e) => e.key)
+        .toList();
+
+      if (filteredIds.isEmpty) {
+        throw 'Tidak ada siswa yang sesuai filter.';
+      }
+
+      // 2. Update assessments table
+      await supabase
+          .from('assessments')
+          .update({'is_published': true})
+          .inFilter('student_id', filteredIds)
+          .eq('semester', _pbSemester);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Berhasil mengirim rapor ke akun user! ✨'), backgroundColor: Colors.green),
+        );
+      }
+      _fetchHistory();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _showDownloadFilterSheet() {
@@ -485,7 +630,9 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
           trailing: _isSelectionMode 
               ? null 
               : Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey[400]),
-          onLongPress: () => _toggleSelection(studentId),
+          onLongPress: () {
+            if (widget.userRole != 'User') _toggleSelection(studentId);
+          },
           onTap: () {
             if (_isSelectionMode) {
               _toggleSelection(studentId);
@@ -497,6 +644,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
                     student: student,
                     assessments: assessments,
                     semester: _selectedSemester,
+                    userRole: widget.userRole,
                   ),
                 ),
               );

@@ -31,6 +31,7 @@ class _ProfilPageState extends State<ProfilPage> {
   final supabase = Supabase.instance.client;
   bool _isLoading = true;
   dynamic _userData;
+  Map<String, dynamic>? _schoolData;
   String? _role;
 
   // --- Color Palette ---
@@ -63,6 +64,17 @@ class _ProfilPageState extends State<ProfilPage> {
   Future<void> _fetchProfileData() async {
     setState(() => _isLoading = true);
     final user = supabase.auth.currentUser;
+    
+    // Jalankan fetch profile dan school data secara paralel
+    await Future.wait([
+      _getProfileInfo(user),
+      _getSchoolInfo(),
+    ]);
+
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  Future<void> _getProfileInfo(User? user) async {
     try {
       if (_role == null && user != null) {
         final profileRes = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
@@ -110,9 +122,20 @@ class _ProfilPageState extends State<ProfilPage> {
         }
       }
     } catch (e) {
-      debugPrint('Error fetch profile: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      debugPrint('Error get profile info: $e');
+    }
+  }
+
+  Future<void> _getSchoolInfo() async {
+    try {
+      final data = await supabase.from('school_data').select().limit(1).maybeSingle();
+      if (mounted && data != null) {
+        setState(() {
+          _schoolData = data;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error get school info: $e');
     }
   }
 
@@ -162,6 +185,7 @@ class _ProfilPageState extends State<ProfilPage> {
             _buildStatsRow(),
             const SizedBox(height: 24),
             _buildInfoCard(),
+            _buildSchoolInfoCard(),
             const SizedBox(height: 40),
           ],
         ),
@@ -414,6 +438,36 @@ class _ProfilPageState extends State<ProfilPage> {
           _infoTile(Icons.badge_outlined, 'Peran / Role', _role ?? '-', isBadge: true),
           const _DividerLight(),
           _infoTile(Icons.location_on_outlined, 'Alamat', _userData?['address'] ?? '-', isLast: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSchoolInfoCard() {
+    if (_schoolData == null) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 5))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Informasi Sekolah', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
+          const SizedBox(height: 20),
+          _infoTile(Icons.school_outlined, 'Nama Sekolah', _schoolData!['name'] ?? '-'),
+          const _DividerLight(),
+          _infoTile(Icons.tag_rounded, 'NPSN', _schoolData!['npsn'] ?? '-'),
+          const _DividerLight(),
+          _infoTile(Icons.verified_outlined, 'Akreditasi', _schoolData!['accreditation'] ?? '-', isBadge: true),
+          const _DividerLight(),
+          _infoTile(Icons.person_pin_outlined, 'Kepala Sekolah', _schoolData!['headmaster_name'] ?? '-'),
+          const _DividerLight(),
+          _infoTile(Icons.location_on_outlined, 'Alamat Sekolah', _schoolData!['address'] ?? '-', isLast: true),
         ],
       ),
     );

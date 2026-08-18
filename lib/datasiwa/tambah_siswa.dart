@@ -34,6 +34,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
   final TextEditingController _batchController = TextEditingController();
   final TextEditingController _curriculumController = TextEditingController();
   final TextEditingController _academicYearController = TextEditingController();
+  final TextEditingController _schoolOfOriginController = TextEditingController();
 
   // --- Controllers Orang Tua (Step 3) ---
   final TextEditingController _fatherNameController = TextEditingController();
@@ -85,6 +86,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
       
       _batchController.text = s['batch'] ?? '';
       _curriculumController.text = s['curriculum'] ?? '';
+      _schoolOfOriginController.text = s['school_of_origin'] ?? '';
 
       _fatherNameController.text = s['father_name'] ?? '';
       _fatherJobController.text = s['father_job'] ?? '';
@@ -123,6 +125,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
     _batchController.dispose();
     _curriculumController.dispose();
     _academicYearController.dispose();
+    _schoolOfOriginController.dispose();
     _fatherNameController.dispose();
     _fatherJobController.dispose();
     _fatherPhoneController.dispose();
@@ -166,6 +169,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
         'curriculum': _selectedCurriculum == 'Lainnya' 
             ? _curriculumController.text.trim() 
             : _selectedCurriculum,
+        'school_of_origin': _schoolOfOriginController.text.trim(),
         'birth_place': _birthPlaceController.text.trim(),
         'birth_date': _birthDateController.text.trim(),
         'gender': _selectedGender == 'Laki-laki' ? 'L' : 'P',
@@ -504,6 +508,8 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
                 ],
               ),
             const SizedBox(height: 24),
+            _field('Asal Sekolah', _schoolOfOriginController, 'Nama sekolah sebelumnya (jika pindahan)', prefixIcon: Icons.apartment_outlined),
+            const SizedBox(height: 24),
             _dropdownField('Status', _selectedStatus, ['Aktif', 'Lulus', 'Keluar'], (v) => setState(() => _selectedStatus = v!), required: true, prefixIcon: Icons.info_outline),
           ],
         ),
@@ -567,6 +573,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
             _confirmDataRow('Rombel', _selectedRombel ?? '-'),
             _confirmDataRow('Angkatan', _batchController.text),
             _confirmDataRow('Kurikulum', _curriculumController.text),
+            _confirmDataRow('Asal Sekolah', _schoolOfOriginController.text),
             _confirmDataRow('Status', _selectedStatus),
             
             const Divider(height: 32),

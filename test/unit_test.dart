@@ -16,7 +16,7 @@ void main() {
     test('Mengidentifikasi Hari Minggu sebagai Hari Libur', () {
       // 26 Juli 2026 adalah hari Minggu
       final sundayDate = DateTime(2026, 7, 26);
-      expect(SundayDateIsSunday(sundayDate), isTrue);
+      expect(sundayDateIsSunday(sundayDate), isTrue);
       expect(HolidayHelper.isHoliday(sundayDate), isTrue);
     });
 
@@ -50,4 +50,4 @@ void main() {
   });
 }
 
-bool SundayDateIsSunday(DateTime d) => d.weekday == DateTime.sunday;
+bool sundayDateIsSunday(DateTime d) => d.weekday == DateTime.sunday;

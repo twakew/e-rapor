@@ -30,7 +30,8 @@ class ExcelHelper {
     'Alamat Orang Tua',
     'Kecamatan Orang Tua',
     'Kabupaten/Kota Orang Tua',
-    'Provinsi Orang Tua'
+    'Provinsi Orang Tua',
+    'Asal Sekolah'
   ];
 
   static final List<String> teacherHeaders = [
@@ -90,7 +91,8 @@ class ExcelHelper {
       'Jl. Merdeka No. 123',
       'Ledeng',
       'Kota Cirebon',
-      'Jawa Barat'
+      'Jawa Barat',
+      'TK Bintang Kecil'
     ];
 
     for (var i = 0; i < sampleData.length; i++) {
@@ -237,6 +239,7 @@ class ExcelHelper {
         'parent_district': val(21),
         'parent_city': val(22),
         'parent_province': val(23),
+        'school_of_origin': val(24),
       });
     }
 

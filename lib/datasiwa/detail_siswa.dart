@@ -293,33 +293,36 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      if (widget.onNavigate != null) {
-                        widget.onNavigate!(10, student: _student);
-                      }
-                    },
-                    icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: const Text('Edit Data'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryTeal,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                if (widget.userRole != 'User')
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        if (widget.onNavigate != null) {
+                          widget.onNavigate!(10, student: _student);
+                        }
+                      },
+                      icon: const Icon(Icons.edit_outlined, size: 16),
+                      label: const Text('Edit Data'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryTeal,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
+                if (widget.userRole != 'User') const SizedBox(width: 8),
                 _iconActionBtn(Icons.message_outlined, onTap: () => _launchWhatsApp(_student['parent_phone'] ?? '')),
                 const SizedBox(width: 8),
                 _iconActionBtn(Icons.qr_code_scanner_outlined, onTap: () => _showQRCode()),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTapDown: (details) => _showMoreMenu(details.globalPosition),
-                  child: _iconActionBtn(Icons.more_vert),
-                ),
+                if (widget.userRole != 'User') ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTapDown: (details) => _showMoreMenu(details.globalPosition),
+                    child: _iconActionBtn(Icons.more_vert),
+                  ),
+                ],
               ],
             ),
           ],
@@ -393,30 +396,34 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
           ),
           Row(
             children: [
-              OutlinedButton.icon(
-                onPressed: () {
-                  if (widget.onNavigate != null) {
-                    widget.onNavigate!(10, student: _student);
-                  }
-                },
-                icon: const Icon(Icons.edit_outlined, size: 14),
-                label: const Text('Edit Data', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  side: BorderSide(color: borderColor),
-                  foregroundColor: textDark,
+              if (widget.userRole != 'User') ...[
+                OutlinedButton.icon(
+                  onPressed: () {
+                    if (widget.onNavigate != null) {
+                      widget.onNavigate!(10, student: _student);
+                    }
+                  },
+                  icon: const Icon(Icons.edit_outlined, size: 14),
+                  label: const Text('Edit Data', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    side: BorderSide(color: borderColor),
+                    foregroundColor: textDark,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
+                const SizedBox(width: 8),
+              ],
               _iconActionBtn(Icons.message_outlined, onTap: () => _launchWhatsApp(_student['parent_phone'] ?? '')),
               const SizedBox(width: 8),
               _iconActionBtn(Icons.qr_code_scanner_outlined, onTap: () => _showQRCode()),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTapDown: (details) => _showMoreMenu(details.globalPosition),
-                child: _iconActionBtn(Icons.more_vert),
-              ),
+              if (widget.userRole != 'User') ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTapDown: (details) => _showMoreMenu(details.globalPosition),
+                  child: _iconActionBtn(Icons.more_vert),
+                ),
+              ],
             ],
           ),
         ],
@@ -808,6 +815,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
             _dataRow('Kewarganegaraan', _student['citizenship'] ?? 'Indonesia'),
             _dataRow('Anak Ke', '${_student['child_number'] ?? '-'}'),
             _dataRow('Bahasa Sehari-hari', _student['language'] ?? 'Indonesia'),
+            _dataRow('Asal Sekolah', _student['school_of_origin'] ?? '-'),
             _dataRow('Alamat', '${_student['address'] ?? '-'}, RT ${_student['rt'] ?? '-'}/RW ${_student['rw'] ?? '-'}, Kel. ${_student['village'] ?? '-'}'),
             _dataRow('Status', _student['status'], isBadge: true),
           ]),
@@ -839,6 +847,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
             _dataRow('Kewarganegaraan', _student['citizenship'] ?? 'Indonesia'),
             _dataRow('Anak Ke', '${_student['child_number'] ?? '-'}'),
             _dataRow('Bahasa Sehari-hari', _student['language'] ?? 'Indonesia'),
+            _dataRow('Asal Sekolah', _student['school_of_origin'] ?? '-'),
             _dataRow('Alamat', '${_student['address'] ?? '-'}, RT ${_student['rt'] ?? '-'}/RW ${_student['rw'] ?? '-'}, Kel. ${_student['village'] ?? '-'}'),
             _dataRow('Status', _student['status'], isBadge: true),
           ]),

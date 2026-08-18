@@ -8,10 +8,11 @@ import '../dataguru/detail_guru.dart';
 class DataKelasPage extends StatefulWidget {
   final String? studentNis;
   final String? studentClass;
+  final String? userRole;
   final bool isEmbedded;
   final Function(int, {Map<String, dynamic>? classData})? onNavigate;
 
-  const DataKelasPage({super.key, this.studentNis, this.studentClass, this.isEmbedded = false, this.onNavigate});
+  const DataKelasPage({super.key, this.studentNis, this.studentClass, this.userRole, this.isEmbedded = false, this.onNavigate});
 
   @override
   State<DataKelasPage> createState() => _DataKelasPageState();
@@ -91,31 +92,67 @@ class _DataKelasPageState extends State<DataKelasPage> {
     try {
       if (!mounted) return;
 
-      // 1. Ambil semua data siswa
-      final studentsResponse = await supabase.from('students').select('class, rombel, batch, status, gender');
-      final List<dynamic> studentsData = studentsResponse as List;
+      // 1. Ambil data siswa
+      List<dynamic> studentsData = [];
+      if (widget.userRole == 'User') {
+        try {
+          // Coba ambil data ringkas siswa secara publik (untuk metadata kelas)
+          final directRes = await supabase.from('students').select('class, rombel, batch, status, gender');
+          if (directRes.isNotEmpty) {
+            studentsData = directRes as List;
+          } else {
+            // Jika kosong/blocked, gunakan RPC
+            final rpc1 = await supabase.rpc('get_all_students_for_user');
+            studentsData = rpc1 is List ? rpc1 : [];
+            
+            if (studentsData.isEmpty) {
+              final rpc2 = await supabase.rpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
+              studentsData = rpc2 is List ? rpc2 : [];
+            }
+          }
+        } catch (e) {
+          debugPrint('User Student Fetch Error: $e');
+        }
+      } else {
+        final studentsResponse = await supabase.from('students').select('class, rombel, batch, status, gender');
+        studentsData = studentsResponse as List;
+      }
       
-      // 2. Ambil data guru (Wali Kelas)
+      // 2. Ambil data guru (Wali Kelas) secara langsung tanpa RPC
       List<dynamic> teachersData = [];
       try {
-        final res = await supabase.from('teachers').select();
-        teachersData = res as List;
+        final resT = await supabase
+            .from('teachers')
+            .select('id, name, role, subject, wali_kelas, angkatan_wali, rombel_wali');
+        teachersData = resT as List;
+        debugPrint('Fetched ${teachersData.length} teachers for matching');
       } catch (e) {
-        debugPrint('Teachers table fetch failed: $e');
+        debugPrint('Teachers fetch failed: $e');
       }
 
       if (!mounted) return;
 
+      // Normalisasi super bersih buat perbandingan (Robust Matching)
+      String superClean(dynamic val) {
+        if (val == null || val.toString().isEmpty || val.toString() == '-') return '';
+        String s = val.toString().toLowerCase().trim();
+        // Hilangkan kata-kata umum bahkan tanpa spasi
+        s = s.replaceAll('tk', '').replaceAll('kelompok', '').replaceAll('kelas', '');
+        // Buang semua karakter aneh (spasi, strip, titik, dll)
+        return s.replaceAll(RegExp(r'[^a-z0-9]'), '').trim();
+      }
+
       // Grouping siswa berdasarkan kombinasi Kelas, Rombel, dan Angkatan
       Map<String, List<Map<String, dynamic>>> groupedClasses = {};
       for (var s in studentsData) {
-        if (s['class'] == null || s['class'].toString().trim().isEmpty) continue;
+        final rawClass = (s['class'] ?? s['class_name'] ?? '').toString().trim();
+        if (rawClass.isEmpty) continue;
         
-        String className = s['class'].toString().trim();
-        String rombelName = (s['rombel'] == null || s['rombel'].toString().trim().isEmpty) ? '-' : s['rombel'].toString().trim();
-        String batchName = (s['batch'] == null || s['batch'].toString().trim().isEmpty) ? '-' : s['batch'].toString().trim();
+        // Coba cari rombel dari berbagai kemungkinan nama field
+        final rawRombel = (s['rombel'] ?? s['rombel_name'] ?? s['rombel_siswa'] ?? '-').toString().trim();
+        final rawBatch = (s['batch'] ?? s['angkatan'] ?? s['batch_name'] ?? '-').toString().trim();
         
-        String key = "$className|$rombelName|$batchName";
+        String key = "$rawClass|$rawRombel|$rawBatch";
         groupedClasses.putIfAbsent(key, () => []).add(s);
       }
 
@@ -129,40 +166,35 @@ class _DataKelasPageState extends State<DataKelasPage> {
         String rombelName = parts[1];
         String batchName = parts[2];
 
-        // Normalisasi super bersih buat perbandingan
-        String superClean(dynamic val) {
-          if (val == null || val.toString().isEmpty || val.toString() == '-') return '';
-          return val.toString().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '').trim();
-        }
-
         String scClass = superClean(className);
         String scRombel = superClean(rombelName);
         String scBatch = superClean(batchName);
 
-        // Cari Wali Kelas yang cocok (Pencarian Ketat: Harus Cocok Kelas, Rombel, dan Angkatan)
-        dynamic waliGuru;
+        // Cari Wali Kelas (Logika Paling Akurat: Match Kelas & Angkatan Saja)
+        List<dynamic> matchingTeachers = [];
         final List allT = teachersData;
         
-        // TIER 1: Exact Match (Raw)
-        var matches = allT.where((t) {
-          return t['wali_kelas']?.toString() == className && 
-                 t['rombel_wali']?.toString() == rombelName && 
-                 t['angkatan_wali']?.toString() == batchName;
+        matchingTeachers = allT.where((t) {
+          if (t['wali_kelas'] == null) return false;
+          
+          String tw = superClean(t['wali_kelas']);
+          String tb = superClean(t['angkatan_wali']);
+
+          // Syarat Mutlak: Cukup Kelas & Angkatan yang sama
+          // Kita abaikan Rombel di sini supaya semua Wali/Pendamping di kelas tsb muncul
+          return (tw == scClass && tb == scBatch);
         }).toList();
 
-        // TIER 2: Match Everything (Cleaned)
-        if (matches.isEmpty) {
-          matches = allT.where((t) {
-            if (t['wali_kelas'] == null) return false;
-            String tw = superClean(t['wali_kelas']);
-            String tr = superClean(t['rombel_wali']);
-            String tb = superClean(t['angkatan_wali']);
-            return tw == scClass && tr == scRombel && tb == scBatch;
-          }).toList();
-        }
+        // Hilangkan duplikat ID jika ada
+        final uniqueIds = <dynamic>{};
+        matchingTeachers = matchingTeachers.where((t) => uniqueIds.add(t['id'])).toList();
 
-        if (matches.isNotEmpty) {
-          waliGuru = matches.first;
+        if (matchingTeachers.isNotEmpty) {
+          // Fallback Rombel: Ambil info rombel dari guru pertama yang punya data
+          if (rombelName == '-' || rombelName.trim().isEmpty) {
+            final withRombel = matchingTeachers.firstWhere((t) => superClean(t['rombel_wali']).isNotEmpty, orElse: () => null);
+            if (withRombel != null) rombelName = withRombel['rombel_wali'].toString();
+          }
         }
 
         // Hitung status kelas
@@ -175,9 +207,9 @@ class _DataKelasPageState extends State<DataKelasPage> {
           'kelas': className,
           'rombel': rombelName,
           'angkatan': batchName,
-          'wali': waliGuru?['name'] ?? '-', 
-          'wali_data': waliGuru, // Simpan data lengkap wali untuk navigasi
-          'role': waliGuru?['role'] ?? 'Guru Kelas',
+          'wali': matchingTeachers.isEmpty ? '-' : matchingTeachers.map((t) => t['name']).join(' & '), 
+          'wali_list': matchingTeachers, 
+          'role': matchingTeachers.isEmpty ? 'Guru Kelas' : matchingTeachers.first['role'],
           'siswa': students.length,
           'laki': students.where((s) => s['gender'] == 'L').length,
           'perempuan': students.where((s) => s['gender'] == 'P').length,
@@ -246,7 +278,11 @@ class _DataKelasPageState extends State<DataKelasPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => DetailKelasPage(classData: item),
+          builder: (context) => DetailKelasPage(
+            classData: item,
+            userRole: widget.userRole,
+            studentNis: widget.studentNis,
+          ),
         ),
       );
     }
@@ -271,18 +307,6 @@ class _DataKelasPageState extends State<DataKelasPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Data Kelas', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textDark)),
-                  ElevatedButton.icon(
-                    onPressed: () => _fetchData(),
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: const Text('Refresh', style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: primaryTeal,
-                      side: BorderSide(color: primaryTeal.withValues(alpha: 0.3)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      elevation: 0,
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -492,8 +516,34 @@ class _DataKelasPageState extends State<DataKelasPage> {
             _cardInfoRow(Icons.calendar_today_rounded, 'Angkatan', item['angkatan'], const Color(0xFFF59E0B)),
             const SizedBox(height: 6),
             InkWell(
-              onTap: item['wali_data'] != null ? () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(teacher: item['wali_data'], userRole: 'Admin')));
+              onTap: item['wali_list'] != null && (item['wali_list'] as List).isNotEmpty ? () {
+                final list = item['wali_list'] as List;
+                if (list.length == 1) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(teacher: list.first, userRole: widget.userRole)));
+                } else {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      title: const Text('Pilih Wali Kelas', style: TextStyle(fontWeight: FontWeight.bold)),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: list.map((t) => ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: primaryTeal.withValues(alpha: 0.1),
+                            child: Text(t['name'][0], style: TextStyle(color: primaryTeal, fontWeight: FontWeight.bold)),
+                          ),
+                          title: Text(t['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text(t['role'] ?? 'Guru Kelas'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(teacher: t, userRole: widget.userRole)));
+                          },
+                        )).toList(),
+                      ),
+                    ),
+                  );
+                }
               } : null,
               borderRadius: BorderRadius.circular(4),
               child: _cardInfoRow(Icons.person_rounded, 'Wali', item['wali'], primaryTeal),

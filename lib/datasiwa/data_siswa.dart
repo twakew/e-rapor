@@ -12,8 +12,9 @@ class DataSiswaPage extends StatefulWidget {
   final String? studentClass;
   final bool isEmbedded;
   final String? userName;
+  final String? userRole;
   final Function(int, {Map<String, dynamic>? student})? onNavigate;
-  const DataSiswaPage({super.key, this.studentNis, this.studentClass, this.isEmbedded = false, this.userName, this.onNavigate});
+  const DataSiswaPage({super.key, this.studentNis, this.studentClass, this.isEmbedded = false, this.userName, this.userRole, this.onNavigate});
 
   @override
   State<DataSiswaPage> createState() => _DataSiswaPageState();
@@ -46,7 +47,11 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
   @override
   void initState() {
     super.initState();
-    _initRealtime();
+    if (widget.userRole == 'User') {
+      _fetchSingleStudentData();
+    } else {
+      _initRealtime();
+    }
     _searchController.addListener(_applyFilters);
   }
 
@@ -55,6 +60,27 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
     _subscription?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchSingleStudentData() async {
+    if (widget.studentNis == null) {
+      setState(() => _loading = false);
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final response = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis});
+      if (mounted && response != null) {
+        setState(() {
+          _all = response as List<dynamic>;
+          _applyFilters();
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching student profile: $e');
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _initRealtime() {
@@ -140,8 +166,8 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
                 children: [
                   _buildHeaderSection(),
                   const SizedBox(height: 24),
-                  _buildFilterSection(),
-                  const SizedBox(height: 24),
+                  if (widget.userRole != 'User') _buildFilterSection(),
+                  if (widget.userRole != 'User') const SizedBox(height: 24),
                   _buildDataTableCard(),
                 ],
               ),
@@ -164,39 +190,42 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: _headerButtonMobile(Icons.add_rounded, 'Tambah', onTap: () {
-                  if (widget.onNavigate != null) {
-                    widget.onNavigate!(10);
-                  } else {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TambahSiswaPage()));
-                  }
-                }, isPrimary: true),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _headerButtonMobile(Icons.download_rounded, 'Template', onTap: () async {
-                  try {
-                    await ExcelHelper.downloadStudentTemplate();
-                    if (mounted) NotificationHelper.show(context, 'Template berhasil didownload');
-                  } catch (e) {
-                    if (mounted) NotificationHelper.show(context, 'Gagal download template: $e', isError: true);
-                  }
-                }),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _headerButtonMobile(Icons.upload_rounded, 'Import', onTap: () async {
-                  try {
-                    int count = await ExcelHelper.importStudentsFromExcel();
-                    if (count > 0) {
-                      if (mounted) NotificationHelper.show(context, 'Berhasil mengimpor $count data siswa');
+              if (widget.userRole != 'User')
+                Expanded(
+                  child: _headerButtonMobile(Icons.add_rounded, 'Tambah', onTap: () {
+                    if (widget.onNavigate != null) {
+                      widget.onNavigate!(10);
+                    } else {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const TambahSiswaPage()));
                     }
-                  } catch (e) {
-                    if (mounted) NotificationHelper.show(context, 'Gagal impor data: $e', isError: true);
-                  }
-                }),
-              ),
+                  }, isPrimary: true),
+                ),
+              if (widget.userRole != 'User') const SizedBox(width: 8),
+              if (widget.userRole != 'User')
+                Expanded(
+                  child: _headerButtonMobile(Icons.download_rounded, 'Template', onTap: () async {
+                    try {
+                      await ExcelHelper.downloadStudentTemplate();
+                      if (mounted) NotificationHelper.show(context, 'Template berhasil didownload');
+                    } catch (e) {
+                      if (mounted) NotificationHelper.show(context, 'Gagal download template: $e', isError: true);
+                    }
+                  }),
+                ),
+              if (widget.userRole != 'User') const SizedBox(width: 8),
+              if (widget.userRole != 'User')
+                Expanded(
+                  child: _headerButtonMobile(Icons.upload_rounded, 'Import', onTap: () async {
+                    try {
+                      int count = await ExcelHelper.importStudentsFromExcel();
+                      if (count > 0) {
+                        if (mounted) NotificationHelper.show(context, 'Berhasil mengimpor $count data siswa');
+                      }
+                    } catch (e) {
+                      if (mounted) NotificationHelper.show(context, 'Gagal impor data: $e', isError: true);
+                    }
+                  }),
+                ),
             ],
           ),
         ],
@@ -211,44 +240,47 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            _headerButton(Icons.download_outlined, 'Download Template', onTap: () async {
-              try {
-                await ExcelHelper.downloadStudentTemplate();
-                if (mounted) NotificationHelper.show(context, 'Template berhasil didownload');
-              } catch (e) {
-                if (mounted) NotificationHelper.show(context, 'Gagal download template: $e', isError: true);
-              }
-            }),
-            const SizedBox(width: 12),
-            _headerButton(Icons.upload_outlined, 'Import Excel', onTap: () async {
-              try {
-                int count = await ExcelHelper.importStudentsFromExcel();
-                if (count > 0) {
-                  if (mounted) NotificationHelper.show(context, 'Berhasil mengimpor $count data siswa');
+            if (widget.userRole != 'User')
+              _headerButton(Icons.download_outlined, 'Download Template', onTap: () async {
+                try {
+                  await ExcelHelper.downloadStudentTemplate();
+                  if (mounted) NotificationHelper.show(context, 'Template berhasil didownload');
+                } catch (e) {
+                  if (mounted) NotificationHelper.show(context, 'Gagal download template: $e', isError: true);
                 }
-              } catch (e) {
-                if (mounted) NotificationHelper.show(context, 'Gagal impor data: $e', isError: true);
-              }
-            }),
-            const SizedBox(width: 12),
-            ElevatedButton.icon(
-              onPressed: () {
-                if (widget.onNavigate != null) {
-                  widget.onNavigate!(10); // Index for TambahSiswaPage
-                } else {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const TambahSiswaPage()));
+              }),
+            if (widget.userRole != 'User') const SizedBox(width: 12),
+            if (widget.userRole != 'User')
+              _headerButton(Icons.upload_outlined, 'Import Excel', onTap: () async {
+                try {
+                  int count = await ExcelHelper.importStudentsFromExcel();
+                  if (count > 0) {
+                    if (mounted) NotificationHelper.show(context, 'Berhasil mengimpor $count data siswa');
+                  }
+                } catch (e) {
+                  if (mounted) NotificationHelper.show(context, 'Gagal impor data: $e', isError: true);
                 }
-              },
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Tambah Siswa', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryTeal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
+              }),
+            if (widget.userRole != 'User') const SizedBox(width: 12),
+            if (widget.userRole != 'User')
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (widget.onNavigate != null) {
+                    widget.onNavigate!(10); // Index for TambahSiswaPage
+                  } else {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TambahSiswaPage()));
+                  }
+                },
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Tambah Siswa', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryTeal,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
+                ),
               ),
-            ),
           ],
         ),
       ],
@@ -539,7 +571,7 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
             if (widget.onNavigate != null) {
               widget.onNavigate!(15, student: s);
             } else {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailSiswaPage(student: s, userRole: 'Admin')));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailSiswaPage(student: s, userRole: widget.userRole ?? 'User')));
             }
           },
           child: Padding(
@@ -577,16 +609,18 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
                     ],
                   ),
                 ),
-                _actionBtn(Icons.edit_outlined, Colors.blue, onTap: () {
-                  if (widget.onNavigate != null) {
-                    widget.onNavigate!(10, student: s);
-                  } else {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => TambahSiswaPage(student: s)));
-                  }
-                }),
-                const SizedBox(width: 8),
-                _actionBtn(Icons.delete_outline, Colors.red, onTap: () => _deleteStudent(s)),
-                const SizedBox(width: 8),
+                if (widget.userRole != 'User')
+                  _actionBtn(Icons.edit_outlined, Colors.blue, onTap: () {
+                    if (widget.onNavigate != null) {
+                      widget.onNavigate!(10, student: s);
+                    } else {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => TambahSiswaPage(student: s)));
+                    }
+                  }),
+                if (widget.userRole != 'User') const SizedBox(width: 8),
+                if (widget.userRole != 'User')
+                  _actionBtn(Icons.delete_outline, Colors.red, onTap: () => _deleteStudent(s)),
+                if (widget.userRole != 'User') const SizedBox(width: 8),
                 Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
               ],
             ),

@@ -21,7 +21,35 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
   @override
   void initState() {
     super.initState();
-    _fetchPendingUsers();
+    _checkIsAdmin();
+  }
+
+  Future<void> _checkIsAdmin() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      _finishLoad();
+      return;
+    }
+    try {
+      final data = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      final role = data['role']?.toString() ?? '';
+      final isAdmin = role == 'Admin' || role == 'Super Admin';
+      if (!isAdmin) {
+        if (mounted) {
+          NotificationHelper.show(context, 'Hanya Admin yang dapat mengakses halaman ini.', isError: true);
+          Navigator.pop(context);
+        }
+        return;
+      }
+      _fetchPendingUsers();
+    } catch (e) {
+      debugPrint('Error checking role: $e');
+      _finishLoad();
+    }
+  }
+
+  void _finishLoad() {
+    if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _fetchPendingUsers() async {

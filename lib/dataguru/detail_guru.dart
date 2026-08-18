@@ -38,7 +38,10 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
   void initState() {
     super.initState();
     _teacher = widget.teacher;
-    _tabController = TabController(length: 5, vsync: this);
+    bool isAdmin = (widget.userRole == 'Admin' || widget.userRole == 'Super Admin');
+    bool isGuru = (widget.userRole == 'Guru');
+    // Admin & Guru: 5 tabs
+    _tabController = TabController(length: (isAdmin || isGuru) ? 5 : 2, vsync: this);
   }
 
   @override
@@ -372,6 +375,9 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
   }
 
   Widget _buildTabsSection() {
+    bool isAdmin = (widget.userRole == 'Admin' || widget.userRole == 'Super Admin');
+    bool isGuru = (widget.userRole == 'Guru');
+    bool showAllTabs = isAdmin || isGuru;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -390,29 +396,45 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
         labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
         onTap: (index) => setState(() {}),
-        tabs: const [
-          Tab(height: 45, text: 'Profil'),
-          Tab(height: 45, text: 'Pekerjaan'),
-          Tab(height: 45, text: 'Kontak'),
-          Tab(height: 45, text: 'Riwayat Pendidikan'),
-          Tab(height: 45, text: 'Aktivitas'),
+        tabs: [
+          if (showAllTabs) const Tab(height: 45, text: 'Profil'),
+          const Tab(height: 45, text: 'Pekerjaan'),
+          const Tab(height: 45, text: 'Kontak'),
+          if (showAllTabs) ...[
+            const Tab(height: 45, text: 'Riwayat Pendidikan'),
+            const Tab(height: 45, text: 'Aktivitas'),
+          ],
         ],
       ),
     );
   }
 
   Widget _buildActiveTabContent() {
-    switch (_tabController.index) {
-      case 0: return _buildProfilTab();
-      case 1: return _buildPekerjaanTab();
-      case 2: return _buildKontakTab();
-      case 3: return _buildRiwayatPendidikanTab();
-      case 4: return _buildAktivitasTab();
-      default: return _buildProfilTab();
+    bool isAdmin = (widget.userRole == 'Admin' || widget.userRole == 'Super Admin');
+    bool isGuru = (widget.userRole == 'Guru');
+    bool showAllTabs = isAdmin || isGuru;
+    
+    if (showAllTabs) {
+      switch (_tabController.index) {
+        case 0: return _buildProfilTab();
+        case 1: return _buildPekerjaanTab();
+        case 2: return _buildKontakTab();
+        case 3: return _buildRiwayatPendidikanTab();
+        case 4: return _buildAktivitasTab();
+        default: return _buildProfilTab();
+      }
+    } else {
+      // Role non-staff lainnya jika ada
+      switch (_tabController.index) {
+        case 0: return _buildPekerjaanTab();
+        case 1: return _buildKontakTab();
+        default: return _buildPekerjaanTab();
+      }
     }
   }
 
   Widget _buildProfilTab() {
+    bool showExtra = (widget.userRole == 'Admin' || widget.userRole == 'Guru' || widget.userRole == 'Super Admin');
     return Column(
       children: [
         _buildSectionCard(
@@ -427,16 +449,18 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
             _dataFieldRow('Agama', _teacher['religion']),
           ],
         ),
-        const SizedBox(height: 24),
-        _buildSectionCard(
-          title: 'Administrasi Tambahan',
-          icon: Icons.folder_shared_outlined,
-          children: [
-            _dataFieldRow('NPWP', _teacher['npwp']),
-            _dataFieldRow('Status Nikah', _teacher['marital_status']),
-            _dataFieldRow('Jml Tanggungan', _teacher['number_of_dependents']),
-          ],
-        ),
+        if (showExtra) ...[
+          const SizedBox(height: 24),
+          _buildSectionCard(
+            title: 'Administrasi Tambahan',
+            icon: Icons.folder_shared_outlined,
+            children: [
+              _dataFieldRow('NPWP', _teacher['npwp']),
+              _dataFieldRow('Status Nikah', _teacher['marital_status']),
+              _dataFieldRow('Jml Tanggungan', _teacher['number_of_dependents']),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -447,7 +471,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
         _buildSectionCard(
           title: 'Data Kepegawaian',
           icon: Icons.work_outline,
-          showEdit: true,
+          showEdit: (widget.userRole == 'Admin' || widget.userRole == 'Super Admin'),
           onEdit: () => _handleEdit(),
           children: [
             _dataFieldRow('Jabatan', _teacher['role']),
@@ -470,7 +494,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
         _buildSectionCard(
           title: 'Kontak & Alamat',
           icon: Icons.contact_page_outlined,
-          showEdit: true,
+          showEdit: (widget.userRole == 'Admin' || widget.userRole == 'Super Admin'),
           onEdit: () => _handleEdit(),
           children: [
             InkWell(

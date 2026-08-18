@@ -1,3 +1,5 @@
+rootProject.name = "test_windows_android"
+
 pluginManagement {
     val flutterSdkPath = run {
         val properties = java.util.Properties()

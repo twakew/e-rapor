@@ -8,8 +8,9 @@ import '../utils/excel_helper.dart';
 
 class DataGuruPage extends StatefulWidget {
   final bool isEmbedded;
+  final String? userRole;
   final Function(int, {Map<String, dynamic>? teacher})? onNavigate;
-  const DataGuruPage({super.key, this.isEmbedded = false, this.onNavigate});
+  const DataGuruPage({super.key, this.isEmbedded = false, this.userRole, this.onNavigate});
 
   @override
   State<DataGuruPage> createState() => _DataGuruPageState();
@@ -53,10 +54,25 @@ class _DataGuruPageState extends State<DataGuruPage> {
 
   Future<void> _fetchData() async {
     try {
-      final d = await supabase.from('teachers').select().order('name', ascending: true);
+      List<dynamic> d = [];
+
+      // JALUR PRO: Gunakan RPC get_public_teachers untuk Siswa (Bypass RLS dengan aman)
+      if (widget.userRole == 'User') {
+        // Siswa (anon) hanya boleh akses lewat RPC publik, bukan query langsung
+        // (query langsung bakal gagal karena RLS menolak baca anon).
+        final response = await supabase.rpc('get_public_teachers');
+        d = (response as List?) ?? [];
+      } else {
+        // Jalur Admin/Guru: Ambil semua data
+        d = await supabase.from('teachers').select().order('name', ascending: true);
+      }
+
       if (mounted) {
-        final roles = d.map((t) => (t['role'] ?? t['position'])?.toString()).whereType<String>().toSet().toList()..sort();
-        final subjects = d.map((t) => t['subject']?.toString()).whereType<String>().toSet().toList()..sort();
+        // Jika guru kosong (tabel kosong / RLS belum siap), biarkan data kosong.
+        // Fallback ke query langsung tak jalan lagi karena RLS menolak akses anon.
+
+        final roles = d.map((t) => (t['role'] ?? 'Guru Kelas').toString()).whereType<String>().toSet().toList()..sort();
+        final subjects = d.map((t) => (t['subject'] ?? '-').toString()).whereType<String>().toSet().toList()..sort();
         
         setState(() {
           _all = d;
@@ -67,6 +83,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
         });
       }
     } catch (e) {
+      debugPrint('Error fetching teacher data: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -160,45 +177,47 @@ class _DataGuruPageState extends State<DataGuruPage> {
             'Data Guru',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textDark, letterSpacing: -0.5),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _headerButtonMobile(Icons.add_rounded, 'Tambah', onTap: () {
-                  if (widget.onNavigate != null) {
-                    widget.onNavigate!(11);
-                  } else {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TambahGuruPage()));
-                  }
-                }, isPrimary: true),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _headerButtonMobile(Icons.download_rounded, 'Template', onTap: () async {
-                  try {
-                    await ExcelHelper.downloadTeacherTemplate();
-                    if (mounted) NotificationHelper.show(context, 'Template berhasil didownload');
-                  } catch (e) {
-                    if (mounted) NotificationHelper.show(context, 'Gagal download template: $e', isError: true);
-                  }
-                }),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _headerButtonMobile(Icons.upload_rounded, 'Import', onTap: () async {
-                  try {
-                    int count = await ExcelHelper.importTeachersFromExcel();
-                    if (count > 0) {
-                      if (mounted) NotificationHelper.show(context, 'Berhasil mengimpor $count data guru');
-                      _fetchData();
+          if (widget.userRole == 'Admin' || widget.userRole == 'Super Admin') ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _headerButtonMobile(Icons.add_rounded, 'Tambah', onTap: () {
+                    if (widget.onNavigate != null) {
+                      widget.onNavigate!(11);
+                    } else {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const TambahGuruPage()));
                     }
-                  } catch (e) {
-                    if (mounted) NotificationHelper.show(context, 'Gagal impor data: $e', isError: true);
-                  }
-                }),
-              ),
-            ],
-          ),
+                  }, isPrimary: true),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _headerButtonMobile(Icons.download_rounded, 'Template', onTap: () async {
+                    try {
+                      await ExcelHelper.downloadTeacherTemplate();
+                      if (mounted) NotificationHelper.show(context, 'Template berhasil didownload');
+                    } catch (e) {
+                      if (mounted) NotificationHelper.show(context, 'Gagal download template: $e', isError: true);
+                    }
+                  }),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _headerButtonMobile(Icons.upload_rounded, 'Import', onTap: () async {
+                    try {
+                      int count = await ExcelHelper.importTeachersFromExcel();
+                      if (count > 0) {
+                        if (mounted) NotificationHelper.show(context, 'Berhasil mengimpor $count data guru');
+                        _fetchData();
+                      }
+                    } catch (e) {
+                      if (mounted) NotificationHelper.show(context, 'Gagal impor data: $e', isError: true);
+                    }
+                  }),
+                ),
+              ],
+            ),
+          ],
         ],
       );
     }
@@ -208,50 +227,51 @@ class _DataGuruPageState extends State<DataGuruPage> {
       children: [
         Text('Data Guru', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textDark)),
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            _headerButton(Icons.download_outlined, 'Download Template', onTap: () async {
-              try {
-                await ExcelHelper.downloadTeacherTemplate();
-                if (mounted) NotificationHelper.show(context, 'Template berhasil didownload');
-              } catch (e) {
-                if (mounted) NotificationHelper.show(context, 'Gagal download template: $e', isError: true);
-              }
-            }),
-            const SizedBox(width: 12),
-            _headerButton(Icons.upload_outlined, 'Import Excel', onTap: () async {
-              try {
-                int count = await ExcelHelper.importTeachersFromExcel();
-                if (count > 0) {
-                  if (mounted) NotificationHelper.show(context, 'Berhasil mengimpor $count data guru');
-                  _fetchData();
+        if (widget.userRole == 'Admin' || widget.userRole == 'Super Admin')
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _headerButton(Icons.download_outlined, 'Download Template', onTap: () async {
+                try {
+                  await ExcelHelper.downloadTeacherTemplate();
+                  if (mounted) NotificationHelper.show(context, 'Template berhasil didownload');
+                } catch (e) {
+                  if (mounted) NotificationHelper.show(context, 'Gagal download template: $e', isError: true);
                 }
-              } catch (e) {
-                if (mounted) NotificationHelper.show(context, 'Gagal impor data: $e', isError: true);
-              }
-            }),
-            const SizedBox(width: 12),
-            ElevatedButton.icon(
-              onPressed: () {
-                if (widget.onNavigate != null) {
-                  widget.onNavigate!(11);
-                } else {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const TambahGuruPage()));
+              }),
+              const SizedBox(width: 12),
+              _headerButton(Icons.upload_outlined, 'Import Excel', onTap: () async {
+                try {
+                  int count = await ExcelHelper.importTeachersFromExcel();
+                  if (count > 0) {
+                    if (mounted) NotificationHelper.show(context, 'Berhasil mengimpor $count data guru');
+                    _fetchData();
+                  }
+                } catch (e) {
+                  if (mounted) NotificationHelper.show(context, 'Gagal impor data: $e', isError: true);
                 }
-              },
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Tambah Guru', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryTeal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
+              }),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (widget.onNavigate != null) {
+                    widget.onNavigate!(11);
+                  } else {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TambahGuruPage()));
+                  }
+                },
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Tambah Guru', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryTeal,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
   }
@@ -482,7 +502,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
             if (widget.onNavigate != null) {
               widget.onNavigate!(16, teacher: t);
             } else {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(teacher: t)));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(teacher: t, userRole: widget.userRole)));
             }
           },
           child: Padding(
@@ -525,16 +545,18 @@ class _DataGuruPageState extends State<DataGuruPage> {
                     ],
                   ),
                 ),
-                _actionBtn(Icons.edit_outlined, Colors.blue, onTap: () {
-                  if (widget.onNavigate != null) {
-                    widget.onNavigate!(11, teacher: t);
-                  } else {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => TambahGuruPage(teacher: t)));
-                  }
-                }),
-                const SizedBox(width: 8),
-                _actionBtn(Icons.delete_outline, Colors.red, onTap: () => _deleteTeacher(t)),
-                const SizedBox(width: 8),
+                if (widget.userRole == 'Admin' || widget.userRole == 'Super Admin') ...[
+                  _actionBtn(Icons.edit_outlined, Colors.blue, onTap: () {
+                    if (widget.onNavigate != null) {
+                      widget.onNavigate!(11, teacher: t);
+                    } else {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => TambahGuruPage(teacher: t)));
+                    }
+                  }),
+                  const SizedBox(width: 8),
+                  _actionBtn(Icons.delete_outline, Colors.red, onTap: () => _deleteTeacher(t)),
+                  const SizedBox(width: 8),
+                ],
                 Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
               ],
             ),

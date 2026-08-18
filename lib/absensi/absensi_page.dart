@@ -66,7 +66,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: widget.userRole == 'User' ? 1 : 4, vsync: this);
     _tabController.addListener(() {
       // Hanya refresh data jika animasi geser tab sudah SELESAI
       // Ini membuat transisi antar tab jauh lebih mulus (semoth)
@@ -184,13 +184,20 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   Future<void> _fetchStudents({bool showLoading = true}) async {
     if (showLoading) setState(() => _isLoading = true);
     try {
-      var query = supabase.from('students').select('id, name, nis, class, rombel, status');
-      
-      if (_selectedBatch != 'Angkatan') query = query.eq('batch', _selectedBatch);
-      if (_selectedClass != 'Kelas') query = query.eq('class', _selectedClass);
-      if (_selectedRombel != 'Rombel') query = query.eq('rombel', _selectedRombel);
+      List<dynamic> studentData;
+      if (widget.userRole == 'User' && widget.studentNis != null) {
+        final response = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
+        studentData = response ?? [];
+      } else {
+        var query = supabase.from('students').select('id, name, nis, class, rombel, status');
+        
+        if (_selectedBatch != 'Angkatan') query = query.eq('batch', _selectedBatch);
+        if (_selectedClass != 'Kelas') query = query.eq('class', _selectedClass);
+        if (_selectedRombel != 'Rombel') query = query.eq('rombel', _selectedRombel);
+        
+        studentData = await query.order('name');
+      }
 
-      final studentData = await query.order('name');
       final String dateStr = "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
       
       final attendanceData = await supabase
@@ -368,15 +375,23 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   Future<void> _fetchMonitoring({VoidCallback? onComplete, bool showLoading = true}) async {
     if (showLoading) setState(() => _isFetchingMonitoring = true);
     try {
-      var studentQuery = supabase.from('students').select('id, name, batch, class, rombel, status');
-      if (_selectedBatch != 'Angkatan') studentQuery = studentQuery.eq('batch', _selectedBatch);
-      if (_selectedClass != 'Kelas') studentQuery = studentQuery.eq('class', _selectedClass);
-      if (_selectedRombel != 'Rombel') studentQuery = studentQuery.eq('rombel', _selectedRombel);
+      List<Map<String, dynamic>> students;
       
-      final studentRes = await studentQuery;
-      final List<Map<String, dynamic>> students = List<Map<String, dynamic>>.from(studentRes as List)
-          .where((s) => s['status']?.toString().toLowerCase() != 'lulus')
-          .toList();
+      if (widget.userRole == 'User' && widget.studentNis != null) {
+        final response = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
+        students = List<Map<String, dynamic>>.from(response ?? []);
+      } else {
+        var studentQuery = supabase.from('students').select('id, name, batch, class, rombel, status');
+        if (_selectedBatch != 'Angkatan') studentQuery = studentQuery.eq('batch', _selectedBatch);
+        if (_selectedClass != 'Kelas') studentQuery = studentQuery.eq('class', _selectedClass);
+        if (_selectedRombel != 'Rombel') studentQuery = studentQuery.eq('rombel', _selectedRombel);
+        
+        final studentRes = await studentQuery;
+        students = List<Map<String, dynamic>>.from(studentRes as List)
+            .where((s) => s['status']?.toString().toLowerCase() != 'lulus')
+            .toList();
+      }
+
       final List<dynamic> studentIds = students.map((s) => s['id']).toList();
 
       if (studentIds.isEmpty) {
@@ -918,33 +933,39 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
               labelPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.2),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              tabs: const [
-                Tab(text: 'Input Harian'),
-                Tab(text: 'Riwayat'),
-                Tab(text: 'Monitoring'),
-                Tab(text: 'Rekap PDF'),
-              ],
+              tabs: widget.userRole == 'User' 
+                  ? const [Tab(text: 'Monitoring')] 
+                  : const [
+                      Tab(text: 'Input Harian'),
+                      Tab(text: 'Riwayat'),
+                      Tab(text: 'Monitoring'),
+                      Tab(text: 'Rekap PDF'),
+                    ],
             ),
           ),
         ),
       ),
       body: Column(
         children: [
-          if (_tabController.index == 0 || _tabController.index == 2) _buildFilters(),
+          if (widget.userRole != 'User' && (_tabController.index == 0 || _tabController.index == 2)) _buildFilters(),
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: [
-                _buildHarianTab(),
-                _buildRiwayatTab(),
-                _buildMonitoringTab(),
-                _buildRekapTab(),
-              ],
+              children: widget.userRole == 'User'
+                  ? [
+                      _buildMonitoringTab(),
+                    ]
+                  : [
+                      _buildHarianTab(),
+                      _buildRiwayatTab(),
+                      _buildMonitoringTab(),
+                      _buildRekapTab(),
+                    ],
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _allStudents.isNotEmpty && _tabController.index == 0 ? _buildBottomSaveButton() : null,
+      bottomNavigationBar: widget.userRole != 'User' && _allStudents.isNotEmpty && _tabController.index == 0 ? _buildBottomSaveButton() : null,
     );
   }
 

@@ -3,13 +3,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../datasiwa/detail_siswa.dart';
 import '../dataguru/detail_guru.dart';
+import '../utils/notification_helper.dart';
 
 class DetailKelasPage extends StatefulWidget {
   final Map<String, dynamic> classData;
+  final String? userRole;
+  final String? studentNis;
   final bool isEmbedded;
   final Function(int, {Map<String, dynamic>? student})? onNavigate;
 
-  const DetailKelasPage({super.key, required this.classData, this.isEmbedded = false, this.onNavigate});
+  const DetailKelasPage({super.key, required this.classData, this.userRole, this.studentNis, this.isEmbedded = false, this.onNavigate});
 
   @override
   State<DetailKelasPage> createState() => _DetailKelasPageState();
@@ -53,47 +56,80 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
 
   Future<void> _fetchData() async {
     try {
-      // 1. Fetch Students (Main Source)
-      final students = await supabase
-          .from('students')
-          .select()
-          .eq('class', widget.classData['kelas'])
-          .eq('rombel', widget.classData['rombel'])
-          .eq('batch', widget.classData['angkatan'])
-          .order('name');
+      String superClean(dynamic val) {
+        if (val == null || val.toString().isEmpty || val.toString() == '-') return '';
+        return val.toString().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '').trim();
+      }
+
+      final scClass = superClean(widget.classData['kelas']);
+      final scRombel = superClean(widget.classData['rombel']);
+      final scBatch = superClean(widget.classData['angkatan']);
+
+      // 1. Fetch Students
+      List<dynamic> students = [];
+      try {
+        if (widget.userRole == 'User') {
+          final res = await supabase.rpc('get_all_students_for_user');
+          List allS = res is List ? res : [];
+          
+          if (allS.isEmpty) {
+            final res2 = await supabase.rpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
+            allS = res2 is List ? res2 : [];
+          }
+
+          // Filter manual dengan toleransi tinggi
+          students = allS.where((s) {
+            final sClass = superClean(s['class'] ?? s['class_name']);
+            final sRombel = superClean(s['rombel'] ?? s['rombel_name']);
+            final sBatch = superClean(s['batch'] ?? s['angkatan'] ?? s['batch_name']);
+            
+            // Cocokkan setidaknya Kelas dan Angkatan (Rombel seringkali null/berbeda format)
+            bool match = sClass == scClass && sBatch == scBatch;
+            if (scRombel.isNotEmpty) {
+              match = match && sRombel == scRombel;
+            }
+            return match;
+          }).toList();
+        } else {
+          students = await supabase
+              .from('students')
+              .select()
+              .eq('class', widget.classData['kelas'])
+              .eq('rombel', widget.classData['rombel'])
+              .eq('batch', widget.classData['angkatan'])
+              .order('name');
+        }
+      } catch (e) {
+        debugPrint('Students fetch error: $e');
+      }
 
       // 2. Fetch Teacher Data (Wali Kelas)
       Map<String, dynamic>? teacher;
       try {
-        final teachers = await supabase.from('teachers').select();
-        
-        String superClean(dynamic val) {
-          if (val == null || val.toString().isEmpty || val.toString() == '-') return '';
-          return val.toString().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '').trim();
+        List<dynamic> teachersData = [];
+        if (widget.userRole == 'User') {
+          teachersData = await supabase.rpc('get_public_teachers');
+        } else {
+          teachersData = await supabase.from('teachers').select();
         }
-
-        final scClass = superClean(widget.classData['kelas']);
-        final scRombel = superClean(widget.classData['rombel']);
-        final scBatch = superClean(widget.classData['angkatan']);
-
-        final List allTeachers = teachers as List;
-        final String rawClass = widget.classData['kelas']?.toString() ?? '';
-        final String rawRombel = widget.classData['rombel']?.toString() ?? '';
-        final String rawBatch = widget.classData['angkatan']?.toString() ?? '';
-
-        // TIER 1: Exact Match (Raw)
-        var matches = allTeachers.where((t) {
-          return t['wali_kelas']?.toString() == rawClass && 
-                 t['rombel_wali']?.toString() == rawRombel && 
-                 t['angkatan_wali']?.toString() == rawBatch;
-        }).toList();
         
-        // TIER 2: Match Everything (Cleaned)
+        final List allTeachers = teachersData;
+        final scTClass = superClean(widget.classData['kelas']);
+        final scTRombel = superClean(widget.classData['rombel']);
+        final scTBatch = superClean(widget.classData['angkatan']);
+
+        // TIER 1: Match Everything (Cleaned)
+        var matches = allTeachers.where((t) => 
+          superClean(t['wali_kelas']) == scTClass && 
+          superClean(t['rombel_wali']) == scTRombel && 
+          superClean(t['angkatan_wali']) == scTBatch
+        ).toList();
+
+        // TIER 2: Match Kelas & Angkatan
         if (matches.isEmpty) {
           matches = allTeachers.where((t) => 
-            superClean(t['wali_kelas']) == scClass && 
-            superClean(t['rombel_wali']) == scRombel && 
-            superClean(t['angkatan_wali']) == scBatch
+            superClean(t['wali_kelas']) == scTClass && 
+            superClean(t['angkatan_wali']) == scTBatch
           ).toList();
         }
 
@@ -104,24 +140,25 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
         debugPrint('Error fetching teacher: $e');
       }
 
-      if (students.isEmpty && teacher == null) {
-        if (mounted) setState(() => _loading = false);
-        return;
-      }
-
-      final studentIds = students.map((s) => s['id']).toList();
-
       // 3. Fetch Realtime Attendance
-      final now = DateTime.now();
-      final firstDay = DateTime(now.year, now.month, 1).toIso8601String();
-      final lastDay = DateTime(now.year, now.month + 1, 0).toIso8601String();
-      
-      final attendance = await supabase
-          .from('attendance')
-          .select('status')
-          .filter('student_id', 'in', studentIds)
-          .gte('date', firstDay)
-          .lte('date', lastDay);
+      List<dynamic> attendance = [];
+      try {
+        final studentIds = students.map((s) => s['id']).where((id) => id != null).toList();
+        if (studentIds.isNotEmpty) {
+          final now = DateTime.now();
+          final firstDay = DateTime(now.year, now.month, 1).toIso8601String();
+          final lastDay = DateTime(now.year, now.month + 1, 0).toIso8601String();
+          
+          attendance = await supabase
+              .from('attendance')
+              .select('status')
+              .filter('student_id', 'in', studentIds)
+              .gte('date', firstDay)
+              .lte('date', lastDay);
+        }
+      } catch (e) {
+        debugPrint('Attendance fetch error: $e');
+      }
 
       if (mounted) {
         setState(() {
@@ -129,8 +166,8 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
           _filteredStudents = students;
           _teacherData = teacher;
           
-          int totalAtt = (attendance as List).length;
-          if (totalAtt > 0) {
+          if (attendance is List && attendance.isNotEmpty) {
+            int totalAtt = attendance.length;
             int hadir = attendance.where((a) => a['status'] == 'Hadir').length;
             _rataKehadiran = (hadir / totalAtt) * 100;
           } else {
@@ -287,7 +324,10 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
           const SizedBox(height: 20),
           InkWell(
             onTap: _teacherData != null ? () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(teacher: _teacherData!, userRole: 'Admin')));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(
+                teacher: _teacherData!, 
+                userRole: widget.userRole ?? 'Admin',
+              )));
             } : null,
             borderRadius: BorderRadius.circular(12),
             child: Padding(
@@ -463,17 +503,49 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
   }
 
   Widget _buildStudentMobileList() {
+    if (_filteredStudents.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.person_off_rounded, size: 48, color: textMuted.withValues(alpha: 0.5)),
+              const SizedBox(height: 12),
+              Text(
+                'Tidak ada siswa ditemukan di kelas ini',
+                style: TextStyle(color: textSecondary, fontWeight: FontWeight.w500, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: _filteredStudents.map((s) {
           bool isLulus = s['status']?.toString().toLowerCase() == 'lulus';
+          
+          final bool isAdmin = widget.userRole == 'Admin' || widget.userRole == 'Guru' || widget.userRole == 'Super Admin';
+          final bool isOwnProfile = widget.studentNis == s['nis']?.toString();
+          final bool canAccess = isAdmin || isOwnProfile;
+
           return InkWell(
             onTap: () {
+              if (!canAccess) {
+                NotificationHelper.show(context, 'Hanya bisa melihat profil Anda sendiri', isError: true);
+                return;
+              }
+              
               if (widget.isEmbedded && widget.onNavigate != null) {
                 widget.onNavigate!(15, student: s as Map<String, dynamic>);
               } else {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => DetailSiswaPage(student: s, userRole: 'Admin')));
+                Navigator.push(context, MaterialPageRoute(builder: (_) => DetailSiswaPage(
+                  student: s, 
+                  userRole: widget.userRole ?? 'Admin',
+                  studentNis: widget.studentNis,
+                )));
               }
             },
             borderRadius: BorderRadius.circular(16),
@@ -521,15 +593,22 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
                       ],
                     ),
                   ),
-                  _actionBtn(Icons.visibility_outlined, const Color(0xFF3B82F6), onTap: () {
-                    if (widget.isEmbedded && widget.onNavigate != null) {
-                      widget.onNavigate!(15, student: s as Map<String, dynamic>);
-                    } else {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => DetailSiswaPage(student: s, userRole: 'Admin')));
-                    }
-                  }),
-                  const SizedBox(width: 8),
-                  Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+                  if (canAccess) ...[
+                    _actionBtn(Icons.visibility_outlined, const Color(0xFF3B82F6), onTap: () {
+                      if (widget.isEmbedded && widget.onNavigate != null) {
+                        widget.onNavigate!(15, student: s as Map<String, dynamic>);
+                      } else {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => DetailSiswaPage(
+                          student: s, 
+                          userRole: widget.userRole ?? 'Admin',
+                          studentNis: widget.studentNis,
+                        )));
+                      }
+                    }),
+                    const SizedBox(width: 8),
+                    Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+                  ] else
+                    Icon(Icons.lock_outline_rounded, color: textMuted.withValues(alpha: 0.5), size: 18),
                 ],
               ),
             ),

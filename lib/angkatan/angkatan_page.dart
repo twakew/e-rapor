@@ -53,14 +53,11 @@ class _AngkatanPageState extends State<AngkatanPage> {
       if (mounted) setState(() => _userRole = 'User');
       return;
     }
-
-    if (user.email == 'triandre980@gmail.com') {
-      if (mounted) setState(() => _userRole = 'Admin');
-      return;
-    }
     try {
       final data = await supabase.from('profiles').select('role').eq('id', user.id).single();
-      if (mounted) setState(() => _userRole = data['role'] ?? 'User');
+      final role = data['role']?.toString() ?? 'User';
+      // Normalisasi Super Admin -> Admin supaya UI konsisten
+      if (mounted) setState(() => _userRole = role == 'Super Admin' ? 'Admin' : role);
     } catch (e) {
       debugPrint('Error fetching role: $e');
       if (mounted) setState(() => _userRole = 'User');

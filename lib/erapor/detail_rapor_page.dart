@@ -13,12 +13,14 @@ class DetailRaporPage extends StatefulWidget {
   final dynamic student;
   final List<dynamic> assessments;
   final int semester;
+  final String? userRole;
 
   const DetailRaporPage({
     super.key,
     required this.student,
     required this.assessments,
     required this.semester,
+    this.userRole,
   });
 
   @override
@@ -240,11 +242,11 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
             ],
           ),
           if (_isPrinting)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: primaryGreen, strokeWidth: 2))),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Color(0xFF0D9488), strokeWidth: 2))),
             )
-          else
+          else if (widget.userRole != 'User')
             IconButton(
               icon: Icon(Icons.print_rounded, color: primaryGreen),
               onPressed: _generateAndPrintPDF,

@@ -27,7 +27,31 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   @override
   void initState() {
     super.initState();
-    _setupRealtimeStreams();
+    _checkIsAdmin();
+  }
+
+  Future<void> _checkIsAdmin() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    try {
+      final data = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      final role = data['role']?.toString() ?? '';
+      final isAdmin = role == 'Admin' || role == 'Super Admin';
+      if (!isAdmin) {
+        if (mounted) {
+          NotificationHelper.show(context, 'Hanya Admin yang dapat mengakses halaman ini.', isError: true);
+          Navigator.pop(context);
+        }
+        return;
+      }
+      _setupRealtimeStreams();
+    } catch (e) {
+      debugPrint('Error checking role: $e');
+      setState(() => _isLoading = false);
+    }
   }
 
   @override

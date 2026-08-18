@@ -1,3 +1,5 @@
+rootProject.name = "laporsekolaherapor_android"
+
 pluginManagement {
     val flutterSdkPath = run {
         val properties = java.util.Properties()
