@@ -212,52 +212,21 @@ class _DasbhorPageState extends State<DasbhorPage> {
   }
 
   Future<void> _fetchStats() async {
-    if (_userRole == 'User') {
-      await _fetchStatsForUser();
-    } else {
-      await _fetchStatsForAdmin();
-    }
-  }
-
-  Future<void> _fetchStatsForAdmin() async {
-    try {
-      final siswa = await supabase.from('students').select('name').eq('status', 'Aktif');
-      if (mounted) setState(() => _totalSiswa = (siswa as List).length);
-    } catch (e) { debugPrint('Siswa fetch error: $e'); }
-
-    try {
-      final guru = await supabase.from('teachers').select('name');
-      if (mounted) setState(() => _totalGuru = (guru as List).length);
-    } catch (e) { debugPrint('Guru fetch error: $e'); }
-
-    try {
-      _fetchKelasFromStudents(); 
-    } catch (e) { 
-      debugPrint('Kelas fetch error: $e');
-    }
-
-    try {
-      final dok = await supabase.from('documentation').select('id');
-      if (mounted) setState(() => _totalDokumentasi = (dok as List).length);
-    } catch (e) { debugPrint('Dokumentasi fetch error: $e'); }
-  }
-
-  Future<void> _fetchStatsForUser() async {
-    // 1. Fetch Students & Classes from Summary RPC
+    // Stat siswa/kelas: agregat RPC (staff) — tak ada dump baris siswa ke User.
     try {
       final List<dynamic> stats = await supabase.rpc('get_student_stats_summary');
       int totalAktif = 0;
       Set<String> uniqueClasses = {};
-      
+
       for (var item in stats) {
         int total = int.tryParse(item['total_count']?.toString() ?? '0') ?? 0;
         int lulus = int.tryParse(item['lulus_count']?.toString() ?? '0') ?? 0;
         totalAktif += (total - lulus);
-        
+
         String className = item['class_name']?.toString() ?? '';
         if (className.isNotEmpty) uniqueClasses.add(className);
       }
-      
+
       if (mounted) {
         setState(() {
           _totalSiswa = totalAktif;
@@ -265,42 +234,28 @@ class _DasbhorPageState extends State<DasbhorPage> {
         });
       }
     } catch (e) {
-      debugPrint('User Student Stats RPC error: $e');
+      debugPrint('Student stats RPC error: $e');
     }
 
-    // 2. Fetch Teachers from Public RPC
+    // 2. Fetch Teachers from Public RPC (kolom non-sensitif saja)
     try {
       final response = await supabase.rpc('get_public_teachers');
       if (mounted && response != null) {
         setState(() => _totalGuru = (response as List).length);
       }
     } catch (e) {
-      debugPrint('User Teacher RPC error: $e');
+      debugPrint('Teacher RPC error: $e');
     }
 
-    // 3. Fetch Documentation (Assuming RLS allows read for all)
+    // 3. Fetch Documentation (RLS: baca publik)
     try {
       final dok = await supabase.from('documentation').select('id');
       if (mounted) setState(() => _totalDokumentasi = (dok as List).length);
-    } catch (e) { 
-      debugPrint('User Documentation fetch error: $e'); 
+    } catch (e) {
+      debugPrint('Documentation fetch error: $e');
     }
   }
 
-  Future<void> _fetchKelasFromStudents() async {
-    try {
-      final students = await supabase.from('students').select('class');
-      final uniqueClasses = (students as List)
-          .map((s) => s['class'])
-          .where((c) => c != null && c.toString().isNotEmpty)
-          .toSet();
-      if (mounted && uniqueClasses.isNotEmpty) {
-        setState(() => _totalKelas = uniqueClasses.length);
-      }
-    } catch (e) {
-      debugPrint('Fallback fetch kelas error: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

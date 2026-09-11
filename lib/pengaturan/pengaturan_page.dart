@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
@@ -47,6 +48,12 @@ class _PengaturanPageState extends State<PengaturanPage> {
 
   Future<void> _signOut() async {
     PushNotificationService.logout();
+    // Bersihkan sesi siswa lokal (NIS) agar tak nyangkut balik ke dashboard.
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('student_name');
+    await prefs.remove('student_nis');
+    await prefs.remove('student_class');
+    await prefs.remove('user_role');
     await supabase.auth.signOut();
     if (mounted) {
       Navigator.pushAndRemoveUntil(

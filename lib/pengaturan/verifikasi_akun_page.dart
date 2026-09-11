@@ -78,13 +78,11 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
     final fullName = userData['full_name'] ?? 'Guru';
 
     try {
-      await supabase
-          .from('profiles')
-          .update({
-            'is_verified': true,
-            'role': role,
-          })
-          .eq('id', userId);
+      // Verifikasi via RPC admin (bypass RLS butuh guard is_admin di DB).
+      // Update langsung tak jalan: policy profiles_update_own hanya kolom
+      // non-sensitif, role/is_verified dikunci.
+      await supabase.rpc('verify_user_by_admin',
+          params: {'p_user_id': userId, 'p_role': role});
       
       // --- KIRIM NOTIFIKASI KE USER BAHWA SUDAH AKTIF ---
       try {

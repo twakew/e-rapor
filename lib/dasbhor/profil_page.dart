@@ -103,7 +103,9 @@ class _ProfilPageState extends State<ProfilPage> {
       } else {
         String? nis = widget.studentNis;
         if (nis != null) {
-          final data = await supabase.from('students').select().eq('nis', nis).maybeSingle();
+          // Siswa tanpa sesi: direct select students ditolak RLS (staff-only).
+          final rows = await supabase.rpc('get_my_profile', params: {'p_nis': nis});
+          final data = (rows is List && rows.isNotEmpty) ? rows.first : null;
           if (data != null) {
             _userData = {
               ...data,

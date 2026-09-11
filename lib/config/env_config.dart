@@ -1,9 +1,19 @@
 class EnvConfig {
-  // --- KEAMANAN PENTING ---
-  // Pastikan Row Level Security (RLS) diaktifkan di Dashboard Supabase.
-  // Anon Key ini aman dipublikasikan HANYA JIKA RLS sudah dikonfigurasi dengan benar.
-  static const String supabaseUrl = 'https://yfqocjqrwyrgapspnarp.supabase.co';
-  static const String supabasePublishableKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmcW9janFyd3lyZ2Fwc3BuYXJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzI0NzYsImV4cCI6MjA5MjgwODQ3Nn0.MnkRpj2p0Jfzv78pD_DKcazjIT28hSKMgNJy8-qe2cI';
-  
-  static const String oneSignalAppId = '5265f904-6f40-41db-acf7-b7c07558dd7d';
+  // DB baru: pnlxugnwevvepagzdxkr ("terbaru").
+  // Publishable key aman di client (otorisasi via RLS). JANGAN taruh
+  // service_role/secret di sini. Lebih baik inject via --dart-define.
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'https://pnlxugnwevvepagzdxkr.supabase.co',
+  );
+  static const String supabasePublishableKey = String.fromEnvironment(
+    'SUPABASE_PUBLISHABLE_KEY',
+    defaultValue:
+        'sb_publishable_qSDLScLssG4t6Fxz5kRwoQ_BVsQEViR',
+  );
+
+  static const String oneSignalAppId = String.fromEnvironment(
+    'ONESIGNAL_APP_ID',
+    defaultValue: '5265f904-6f40-41db-acf7-b7c07558dd7d',
+  );
 }

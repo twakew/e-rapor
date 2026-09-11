@@ -99,10 +99,8 @@ class _AngkatanPageState extends State<AngkatanPage> {
               .select('name, class, batch, status, nis')
               .order('name', ascending: true);
         } else {
-          allStudents = await supabase.rpc('get_all_students_for_user');
-          if (allStudents.isEmpty) {
-            allStudents = await supabase.rpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
-          }
+          // Siswa: sekelas sendiri saja (RPC bulk dump dihapus di DB).
+          allStudents = await supabase.rpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
         }
       } catch (e) {
         debugPrint('Gagal tarik daftar siswa: $e');

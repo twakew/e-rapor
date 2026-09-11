@@ -101,14 +101,9 @@ class _DataKelasPageState extends State<DataKelasPage> {
           if (directRes.isNotEmpty) {
             studentsData = directRes as List;
           } else {
-            // Jika kosong/blocked, gunakan RPC
-            final rpc1 = await supabase.rpc('get_all_students_for_user');
-            studentsData = rpc1 is List ? rpc1 : [];
-            
-            if (studentsData.isEmpty) {
-              final rpc2 = await supabase.rpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
-              studentsData = rpc2 is List ? rpc2 : [];
-            }
+            // Siswa: sekelas sendiri (RPC bulk dump dihapus di DB).
+            final rpc = await supabase.rpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
+            studentsData = rpc is List ? rpc : [];
           }
         } catch (e) {
           debugPrint('User Student Fetch Error: $e');

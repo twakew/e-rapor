@@ -73,33 +73,52 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
     try {
       if (!mounted) return;
       if (showLoading) setState(() => _isLoading = true);
-      
-      var query = supabase
-          .from('assessments')
-          .select('*, students!inner(*)');
-      
+
+      List<dynamic> response;
       if (widget.userRole == 'User' && widget.studentNis != null) {
-        // Filter super ketat: Hanya yang NIS-nya cocok DAN statusnya sudah Published
-        query = query.eq('students.nis', widget.studentNis!.trim()).eq('is_published', true);
-      }
-      
-      if (_selectedSemester == 1) {
-        query = query.or('semester.eq.1,semester.is.null');
+        // Siswa: rapor published milik sendiri via RPC (direct select
+        // assessments ditolak RLS utk non-staff). RPC flat -> adaptor.
+        final rows = await supabase.rpc('get_my_rapor',
+            params: {'p_nis': widget.studentNis!.trim()});
+        response = ((rows as List?) ?? [])
+            .where((a) => _selectedSemester == 1
+                ? ((a['semester'] ?? 1) == 1)
+                : (a['semester'] == 2))
+            .map((a) => {
+                  ...a,
+                  'students': {
+                    'id': a['student_id'],
+                    'name': a['student_name'],
+                    'nis': a['student_nis'],
+                    'class': a['student_class'],
+                    'rombel': a['student_rombel'],
+                    'batch': a['student_batch'],
+                  },
+                })
+            .toList();
       } else {
-        query = query.eq('semester', 2);
+        var query = supabase
+            .from('assessments')
+            .select('*, students!inner(*)');
+
+        if (_selectedSemester == 1) {
+          query = query.or('semester.eq.1,semester.is.null');
+        } else {
+          query = query.eq('semester', 2);
+        }
+
+        response = await query.order('created_at', ascending: false);
       }
 
-      final response = await query.order('created_at', ascending: false);
-      
       final Map<String, dynamic> grouped = {};
       for (var item in response) {
         var student = item['students'];
         if (student == null) continue;
-        
+
         if (student is List && student.isNotEmpty) {
           student = student.first;
         }
-        
+
         final studentId = student['id'].toString();
         if (!grouped.containsKey(studentId)) {
           grouped[studentId] = {

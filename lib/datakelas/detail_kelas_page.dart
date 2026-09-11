@@ -69,13 +69,8 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
       List<dynamic> students = [];
       try {
         if (widget.userRole == 'User') {
-          final res = await supabase.rpc('get_all_students_for_user');
+          final res = await supabase.rpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
           List allS = res is List ? res : [];
-          
-          if (allS.isEmpty) {
-            final res2 = await supabase.rpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
-            allS = res2 is List ? res2 : [];
-          }
 
           // Filter manual dengan toleransi tinggi
           students = allS.where((s) {

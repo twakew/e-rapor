@@ -92,6 +92,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   }
 
   void _setupRealtime() {
+    if (widget.userRole == 'User') return; // Siswa: skip realtime tabel staff-only (RLS tolak).
     // 1. Attendance Realtime
     _attendanceSubscription = supabase
         .from('attendance')
@@ -145,9 +146,18 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   Future<void> _loadInitialData() async {
     setState(() => _isLoading = true);
     try {
-      final filterData = await supabase.from('students').select('batch, class, rombel, status');
+      // Siswa: data sendiri via RPC (direct students/teachers ditolak RLS);
+      // filter kosong, kehadiran via get_my_attendance.
+      dynamic filterData;
+      dynamic teachersRes;
       final schoolRes = await supabase.from('school_data').select().limit(1).maybeSingle();
-      final teachersRes = await supabase.from('teachers').select('name, nip, wali_kelas, angkatan_wali, rombel_wali');
+      if (widget.userRole == 'User') {
+        filterData = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis ?? ''});
+        teachersRes = await supabase.rpc('get_public_teachers');
+      } else {
+        filterData = await supabase.from('students').select('batch, class, rombel, status');
+        teachersRes = await supabase.from('teachers').select('name, nip, wali_kelas, angkatan_wali, rombel_wali');
+      }
 
       if (mounted) {
         final List<Map<String, dynamic>> rawData = List<Map<String, dynamic>>.from(filterData as List)
@@ -158,7 +168,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
           _rawFilterData = rawData;
           _schoolData = schoolRes;
           _teachersList = List<Map<String, dynamic>>.from(teachersRes as List);
-          
+
           // Reset filters to "Semua" on initial load as requested
           _selectedBatch = 'Angkatan';
           _selectedClass = 'Kelas';
@@ -185,31 +195,38 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
     if (showLoading) setState(() => _isLoading = true);
     try {
       List<dynamic> studentData;
+      List<dynamic> attendanceData;
+      final String dateStr = "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
+
       if (widget.userRole == 'User' && widget.studentNis != null) {
-        final response = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
-        studentData = response ?? [];
+        // Siswa: profil + absensi sendiri via RPC (tabel staff-only).
+        studentData = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
+        final myAtt = await supabase.rpc('get_my_attendance', params: {'p_nis': widget.studentNis!});
+        final today = (myAtt is List)
+            ? myAtt.where((a) => a['date'].toString().startsWith(dateStr)).toList()
+            : [];
+        final myId = (studentData is List && studentData.isNotEmpty) ? studentData.first['id'] : null;
+        attendanceData = today.map((a) => {'student_id': myId, 'status': a['status']}).toList();
       } else {
         var query = supabase.from('students').select('id, name, nis, class, rombel, status');
-        
+
         if (_selectedBatch != 'Angkatan') query = query.eq('batch', _selectedBatch);
         if (_selectedClass != 'Kelas') query = query.eq('class', _selectedClass);
         if (_selectedRombel != 'Rombel') query = query.eq('rombel', _selectedRombel);
-        
-        studentData = await query.order('name');
+
+        studentData = List.from(await query.order('name'));
+
+        attendanceData = List.from(await supabase
+            .from('attendance')
+            .select('student_id, status')
+            .eq('date', dateStr));
       }
 
-      final String dateStr = "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
-      
-      final attendanceData = await supabase
-          .from('attendance')
-          .select('student_id, status')
-          .eq('date', dateStr);
-
       final List<Map<String, dynamic>> studentsWithAttendance = [];
-      for (var student in (studentData as List)) {
+      for (var student in studentData) {
         if (student['status']?.toString().toLowerCase() == 'lulus') continue;
 
-        final att = (attendanceData as List)
+        final att = attendanceData
             .where((a) => a['student_id'] == student['id'])
             .firstOrNull;
 
@@ -287,14 +304,30 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   Future<void> _fetchRiwayat({bool showLoading = true}) async {
     if (showLoading) setState(() => _isFetchingRiwayat = true);
     try {
-      final attendanceData = await supabase
-          .from('attendance')
-          .select('date, status, student_id, students(name, class, rombel, batch)')
-          .order('date', ascending: false);
+      // Siswa: riwayat sendiri via RPC (join attendance+students staff-only).
+      List<dynamic> attendanceData;
+      if (widget.userRole == 'User' && widget.studentNis != null) {
+        final me = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
+        final myAtt = await supabase.rpc('get_my_attendance', params: {'p_nis': widget.studentNis!});
+        final s = (me is List && me.isNotEmpty) ? me.first : null;
+        attendanceData = (myAtt is List && s != null)
+            ? myAtt.map((a) => {
+                  'date': a['date'],
+                  'status': a['status'],
+                  'student_id': s['id'],
+                  'students': {'name': s['name'], 'class': s['class'], 'rombel': s['rombel'], 'batch': s['batch']},
+                }).toList()
+            : [];
+      } else {
+        attendanceData = List.from(await supabase
+            .from('attendance')
+            .select('date, status, student_id, students(name, class, rombel, batch)')
+            .order('date', ascending: false));
+      }
 
       final Map<String, Map<String, dynamic>> dateGrouped = {};
-      
-      for (var item in (attendanceData as List)) {
+
+      for (var item in attendanceData) {
         final date = item['date'].toString().split('T')[0].split(' ')[0];
         if (!dateGrouped.containsKey(date)) {
           dateGrouped[date] = {
@@ -376,32 +409,8 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
     if (showLoading) setState(() => _isFetchingMonitoring = true);
     try {
       List<Map<String, dynamic>> students;
-      
-      if (widget.userRole == 'User' && widget.studentNis != null) {
-        final response = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
-        students = List<Map<String, dynamic>>.from(response ?? []);
-      } else {
-        var studentQuery = supabase.from('students').select('id, name, batch, class, rombel, status');
-        if (_selectedBatch != 'Angkatan') studentQuery = studentQuery.eq('batch', _selectedBatch);
-        if (_selectedClass != 'Kelas') studentQuery = studentQuery.eq('class', _selectedClass);
-        if (_selectedRombel != 'Rombel') studentQuery = studentQuery.eq('rombel', _selectedRombel);
-        
-        final studentRes = await studentQuery;
-        students = List<Map<String, dynamic>>.from(studentRes as List)
-            .where((s) => s['status']?.toString().toLowerCase() != 'lulus')
-            .toList();
-      }
-
-      final List<dynamic> studentIds = students.map((s) => s['id']).toList();
-
-      if (studentIds.isEmpty) {
-        setState(() {
-          _monitoringData = [];
-          _isFetchingMonitoring = false;
-        });
-        return;
-      }
-
+      List<dynamic> attendanceData;
+      String startStr, endStr;
       DateTime firstDay;
       DateTime lastDay;
 
@@ -420,19 +429,56 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
         lastDay = DateTime(_monitoringYear, _monitoringMonth + 1, 0);
       }
 
-      final String startStr = "${firstDay.year}-${firstDay.month.toString().padLeft(2, '0')}-${firstDay.day.toString().padLeft(2, '0')}";
-      final String endStr = "${lastDay.year}-${lastDay.month.toString().padLeft(2, '0')}-${lastDay.day.toString().padLeft(2, '0')}";
+      startStr = "${firstDay.year}-${firstDay.month.toString().padLeft(2, '0')}-${firstDay.day.toString().padLeft(2, '0')}";
+      endStr = "${lastDay.year}-${lastDay.month.toString().padLeft(2, '0')}-${lastDay.day.toString().padLeft(2, '0')}";
 
-      final attendanceData = await supabase
-          .from('attendance')
-          .select('status, student_id, date')
-          .inFilter('student_id', studentIds)
-          .gte('date', startStr)
-          .lte('date', endStr);
+      if (widget.userRole == 'User' && widget.studentNis != null) {
+        // Siswa: monitoring diri sendiri via RPC (tabel attendance staff-only).
+        final me = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
+        students = List<Map<String, dynamic>>.from((me is List) ? me : []);
+        final myAtt = await supabase.rpc('get_my_attendance', params: {'p_nis': widget.studentNis!});
+        final s = students.isNotEmpty ? students.first : null;
+        attendanceData = (myAtt is List && s != null)
+            ? myAtt
+                .where((a) {
+                  final d = a['date'].toString().split('T')[0].split(' ')[0];
+                  return d.compareTo(startStr) >= 0 && d.compareTo(endStr) <= 0;
+                })
+                .map((a) => {'status': a['status'], 'student_id': s['id'], 'date': a['date']})
+                .toList()
+            : [];
+      } else {
+        var studentQuery = supabase.from('students').select('id, name, batch, class, rombel, status');
+        if (_selectedBatch != 'Angkatan') studentQuery = studentQuery.eq('batch', _selectedBatch);
+        if (_selectedClass != 'Kelas') studentQuery = studentQuery.eq('class', _selectedClass);
+        if (_selectedRombel != 'Rombel') studentQuery = studentQuery.eq('rombel', _selectedRombel);
+
+        final studentRes = await studentQuery;
+        students = List<Map<String, dynamic>>.from(studentRes as List)
+            .where((s) => s['status']?.toString().toLowerCase() != 'lulus')
+            .toList();
+
+        final List<dynamic> studentIds = students.map((s) => s['id']).toList();
+
+        if (studentIds.isEmpty) {
+          setState(() {
+            _monitoringData = [];
+            _isFetchingMonitoring = false;
+          });
+          return;
+        }
+
+        attendanceData = List.from(await supabase
+            .from('attendance')
+            .select('status, student_id, date')
+            .inFilter('student_id', studentIds)
+            .gte('date', startStr)
+            .lte('date', endStr));
+      }
 
       final List<Map<String, dynamic>> rekap = [];
       for (var student in students) {
-        final List studentAtt = (attendanceData as List).where((a) => a['student_id'] == student['id']).toList();
+        final List studentAtt = attendanceData.where((a) => a['student_id'] == student['id']).toList();
         
         final Map<int, String> daily = {};
         for (var att in studentAtt) {

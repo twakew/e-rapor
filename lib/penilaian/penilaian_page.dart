@@ -54,12 +54,20 @@ class _PenilaianPageState extends State<PenilaianPage> {
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
     try {
-      final response = await supabase.from('students').select().order('name', ascending: true);
-      
-      // Fetch assessment counts to determine completion status
-      final assessmentsResponse = await supabase
-          .from('assessments')
-          .select('student_id, semester');
+      List<dynamic> response;
+      List<dynamic> assessmentsResponse;
+      if (widget.userRole == 'User' && widget.studentNis != null) {
+        // Siswa: data sendiri via RPC (direct select ditolak RLS).
+        response = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
+        assessmentsResponse = await supabase.rpc('get_my_rapor', params: {'p_nis': widget.studentNis!});
+      } else {
+        response = await supabase.from('students').select().order('name', ascending: true);
+
+        // Fetch assessment counts to determine completion status
+        assessmentsResponse = await supabase
+            .from('assessments')
+            .select('student_id, semester');
+      }
       
       Map<String, Map<int, int>> completionMap = {};
       for (var a in assessmentsResponse) {
@@ -71,7 +79,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
 
       if (mounted) {
         setState(() {
-          _students = (response as List).map((s) {
+          _students = response.map((s) {
             String sid = s['id'].toString();
             // Total categories is 19 based on InputNilaiPage
             s['sem1_count'] = completionMap[sid]?[1] ?? 0;
