@@ -57,3 +57,8 @@ android/.gradle/
 supabase/.temp/
 .agents/
 .claude/
+
+# Duplikat project & file temp (bukan bagian deliverable)
+test_windows/
+v1/
+errorlog.txt
