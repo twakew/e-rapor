@@ -711,7 +711,7 @@ class _RegisterPageState extends State<RegisterPage> {
           child: const Text(
             'Masuk Di Sini',
             style: TextStyle(
-              color: AppColors.primary,
+              color: AppColors.brand,
               fontWeight: FontWeight.w900,
               fontSize: 12.5,
             ),

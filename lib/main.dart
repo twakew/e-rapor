@@ -110,6 +110,22 @@ class _MyAppState extends State<MyApp> {
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         ),
+        cardTheme: CardThemeData(
+          color: AppColors.cardWhite,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.borderColor),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(foregroundColor: AppColors.brand),
+        ),
+        listTileTheme: const ListTileThemeData(
+          iconColor: AppColors.textSecondary,
+        ),
         snackBarTheme: const SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.textDark,

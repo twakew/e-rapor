@@ -720,13 +720,13 @@ class _LoginPageState extends State<LoginPage> {
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.accent,
+                color: AppColors.brand,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Icon(
                 Icons.school_rounded,
                 size: 38,
-                color: AppColors.primary,
+                color: Colors.white,
               ),
             ),
           ),
@@ -972,7 +972,7 @@ class _LoginPageState extends State<LoginPage> {
             child: TextButton(
               onPressed: _forgotPassword,
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
+                foregroundColor: AppColors.brand,
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               ),
               child: const Text(
@@ -990,7 +990,7 @@ class _LoginPageState extends State<LoginPage> {
           Container(
             height: 52,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               gradient: const LinearGradient(
                 colors: [
                   AppColors.brand,
@@ -1080,7 +1080,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: const Text(
                   'Daftar Di Sini',
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: AppColors.brand,
                     fontWeight: FontWeight.w900,
                     fontSize: 12.5,
                   ),

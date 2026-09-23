@@ -17,8 +17,8 @@ class AppColors {
 
   // --- Text ---
   static const Color textDark = Color(0xFF111111); // Off-Black
-  static const Color textSecondary = Color(0xFF787774); // Muted Gray
-  static const Color textMuted = Color(0xFFA8A8A6); // Lighter Gray
+  static const Color textSecondary = Color(0xFF5F5F5C); // Muted Gray — AA di atas putih & abu terang (dulu #787774 borderline 4.0:1)
+  static const Color textMuted = Color(0xFF6B7280); // Gray-500 — kontras AA di atas putih (dulu #A8A8A6 cuma 2.1:1)
 
   // --- Borders & Dividers ---
   static const Color borderColor = Color(0xFFEAEAEA); // Ultra-light Gray
