@@ -31,9 +31,10 @@ const ADMIN_ROLES = ['Admin', 'Super Admin'];
 function requireRole(roles) {
   return async (req, res, next) => {
     try {
-      const r = await db.query('SELECT role FROM profiles WHERE id = $1', [req.userId]);
-      const role = r.rows[0] && r.rows[0].role;
-      if (!role || !roles.includes(role)) {
+      const r = await db.query('SELECT role, is_verified FROM profiles WHERE id = $1', [req.userId]);
+      const row = r.rows[0];
+      const role = row && row.role;
+      if (!role || !roles.includes(role) || row.is_verified === false) {
         return res.status(403).json({ error: 'Insufficient role' });
       }
       req.userRole = role;

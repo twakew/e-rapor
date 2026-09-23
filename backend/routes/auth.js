@@ -20,6 +20,14 @@ router.post('/login', async (req, res) => {
     if (!match) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+
+    // Gate verifikasi: akun yang belum diverifikasi admin tidak boleh masuk.
+    // (Baris profiles dibuat otomatis trigger on_user_created; kalau tidak ada
+    // baris sama sekali — skema lama — lolos supaya tidak mengunci akun legacy.)
+    const prof = await db.query('SELECT is_verified FROM profiles WHERE id = $1', [user.id]);
+    if (prof.rows.length > 0 && prof.rows[0].is_verified === false) {
+      return res.status(403).json({ error: 'Akun belum diverifikasi. Hubungi admin sekolah.' });
+    }
     
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
     
