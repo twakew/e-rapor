@@ -63,3 +63,4 @@ test_windows/
 v1/
 errorlog.txt
 .hermes-tmp.*/
+backend/uploads/
