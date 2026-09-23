@@ -14,9 +14,9 @@ Aplikasi ini dilengkapi dengan berbagai fitur untuk mendukung operasional sekola
 - **🎓 Data Angkatan**: Fitur untuk mengelola dan mengelompokkan siswa berdasarkan tahun masuk atau angkatan.
 - **🏫 Profil Sekolah**: Pengelolaan data resmi sekolah seperti NPSN, Akreditasi, Kurikulum, dan informasi kontak.
 - **📸 Dokumentasi**: Galeri kegiatan sekolah untuk mendokumentasikan momen-momen penting dalam bentuk foto/media.
-- **🔐 Sistem Autentikasi & Role**: Keamanan akses menggunakan Supabase Auth dengan pembagian peran (Super Admin, Admin, dan User).
+- **🔐 Sistem Autentikasi & Role**: Keamanan akses menggunakan backend Express (JWT) dengan pembagian peran (Super Admin, Admin, dan Guru).
 - **🔔 Push Notifications**: Pengiriman pengumuman dan notifikasi penting secara real-time menggunakan integrasi OneSignal.
-- **🔄 Real-time Database**: Sinkronisasi data secara instan di semua perangkat menggunakan Supabase Database.
+- **🔄 Sinkronisasi Data**: Data tersimpan di PostgreSQL dan disinkronkan lewat REST API backend (`lib/services/api_service.dart`) — bukan Supabase Realtime.
 
 ## 🛠️ Teknologi yang Digunakan
 

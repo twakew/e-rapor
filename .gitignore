@@ -47,3 +47,13 @@ app.*.map.json
 node_modules/
 android/build/
 android/.gradle/
+
+# Server secrets
+.env
+.env.*
+!.env.example
+
+# Agent/tool local state & generated service state
+supabase/.temp/
+.agents/
+.claude/
