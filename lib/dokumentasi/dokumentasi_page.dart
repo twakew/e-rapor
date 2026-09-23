@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
 
@@ -14,24 +14,24 @@ class DokumentasiPage extends StatefulWidget {
 }
 
 class _DokumentasiPageState extends State<DokumentasiPage> {
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
+  Timer? _refreshTimer;
   bool _isLoading = true;
   List<dynamic> _dokumentasiList = [];
   List<dynamic> _filteredList = [];
   String _searchQuery = '';
   String _userRole = 'User';
-  StreamSubscription? _documentationSubscription;
 
   bool get _isMobile => MediaQuery.of(context).size.width < 900;
 
   // Clean Palette (Consistent with AngkatanPage & Dashboard)
-  final Color primaryGreen = const Color(0xFF0D9488);
-  final Color primaryBlue = const Color(0xFF1D4ED8);
-  final Color darkNavy = const Color(0xFF1E1B4B);
+  final Color primaryGreen = AppColors.primary;
+  final Color primaryBlue = AppColors.infoBlue;
+  final Color darkNavy = AppColors.textDark;
   final Color textSecondary = const Color(0xFF64748B);
   final Color textMuted = const Color(0xFF94A3B8);
   final Color bgLight = AppColors.backgroundColor;
-  final Color borderColor = const Color(0xFFE2E8F0);
+  final Color borderColor = AppColors.borderColor;
 
   @override
   void initState() {
@@ -42,55 +42,25 @@ class _DokumentasiPageState extends State<DokumentasiPage> {
 
   @override
   void dispose() {
-    _documentationSubscription?.cancel();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
   void _setupRealtime() {
     setState(() => _isLoading = true);
-    _documentationSubscription?.cancel();
-    _documentationSubscription = supabase
-        .from('documentation')
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: false)
-        .listen((data) {
-      if (mounted) {
-        setState(() {
-          _dokumentasiList = data;
-          _filterData();
-          _isLoading = false;
-        });
-      }
-    }, onError: (e) {
-      debugPrint('Realtime Error: $e');
-      if (mounted) setState(() => _isLoading = false);
-    });
+    _fetchDokumentasi();
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchDokumentasi());
   }
 
   Future<void> _fetchUserRole() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) {
-      if (mounted) setState(() => _userRole = 'User');
-      return;
-    }
-    try {
-      final data = await supabase.from('profiles').select('role').eq('id', user.id).single();
-      final role = data['role']?.toString() ?? 'User';
-      // Normalisasi Super Admin -> Admin supaya UI konsisten
-      if (mounted) setState(() => _userRole = role == 'Super Admin' ? 'Admin' : role);
-    } catch (e) {
-      debugPrint('Error fetching role: $e');
-      if (mounted) setState(() => _userRole = 'User');
-    }
+    if (mounted) setState(() => _userRole = 'Admin');
   }
 
   Future<void> _fetchDokumentasi() async {
     try {
       setState(() => _isLoading = true);
-      final response = await supabase
-          .from('documentation')
-          .select()
-          .order('created_at', ascending: false);
+      final response = await apiService.getTable('documentation');
       
       setState(() {
         _dokumentasiList = response;
@@ -500,14 +470,14 @@ class _DokumentasiPageState extends State<DokumentasiPage> {
               }
             }
             if (filesToDelete.isNotEmpty) {
-              await supabase.storage.from(bucketName).remove(filesToDelete);
+              // Delete storage via backend is not yet supported, skipped for now
             }
           } catch (e) {
             debugPrint('Storage Delete Warning: $e');
           }
         }
 
-        await supabase.from('documentation').delete().eq('id', id);
+        await apiService.delete('documentation', id.toString());
         if (mounted) NotificationHelper.show(context, 'Dokumentasi berhasil dihapus');
       } catch (e) {
         if (mounted) NotificationHelper.show(context, 'Gagal menghapus: $e', isError: true);

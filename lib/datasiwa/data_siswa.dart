@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'dart:async';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'tambah_siswa.dart';
@@ -28,8 +28,8 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
   final Color textSecondary = AppColors.textSecondary;
   final Color textMuted = AppColors.textMuted;
 
-  final supabase = Supabase.instance.client;
-  StreamSubscription? _subscription;
+  final apiService = ApiService();
+  Timer? _refreshTimer;
   List<dynamic> _all = [];
   List<dynamic> _filtered = [];
   bool _loading = true;
@@ -57,7 +57,7 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
 
   @override
   void dispose() {
-    _subscription?.cancel();
+    _refreshTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -69,7 +69,7 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
     }
     setState(() => _loading = true);
     try {
-      final response = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis});
+      final response = await apiService.callRpc('get_my_profile', params: {'p_nis': widget.studentNis});
       if (mounted && response != null) {
         setState(() {
           _all = response as List<dynamic>;
@@ -84,24 +84,28 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
   }
 
   void _initRealtime() {
-    setState(() => _loading = true);
-    // Menggunakan stream untuk mendapatkan data secara realtime
-    _subscription = supabase
-        .from('students')
-        .stream(primaryKey: ['id'])
-        .order('name')
-        .listen((data) {
+    _fetchData();
+    // Poll data periodically instead of stream
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchData(isSilent: true));
+  }
+
+  Future<void> _fetchData({bool isSilent = false}) async {
+    if (!isSilent) setState(() => _loading = true);
+    try {
+      final data = await apiService.getTable('students');
       if (mounted) {
         setState(() {
           _all = data;
-          _applyFilters(); // Otomatis terapkan filter saat ada data baru
+          // Note: API already returns latest order if backend specifies, but we sort locally if needed.
+          _all.sort((a, b) => (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString()));
+          _applyFilters();
           _loading = false;
         });
       }
-    }, onError: (e) {
-      debugPrint('Realtime error: $e');
-      if (mounted) setState(() => _loading = false);
-    });
+    } catch (e) {
+      debugPrint('Error fetch data: $e');
+      if (mounted && !isSilent) setState(() => _loading = false);
+    }
   }
 
   void _applyFilters() {
@@ -142,7 +146,7 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
 
     if (confirmed == true) {
       try {
-        await supabase.from('students').delete().eq('id', student['id']);
+        await apiService.delete('students', student['id']);
         if (mounted) NotificationHelper.show(context, 'Data siswa berhasil dihapus');
       } catch (e) {
         if (mounted) NotificationHelper.show(context, 'Gagal menghapus data: $e', isError: true);

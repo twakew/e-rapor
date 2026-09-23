@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image/image.dart' as img;
@@ -22,18 +22,18 @@ class _TambahDokumentasiPageState extends State<TambahDokumentasiPage> {
   final _descController = TextEditingController();
   PlatformFile? _pickedFile;
   bool _isLoading = false;
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
 
   bool get _isMobile => MediaQuery.of(context).size.width < 900;
 
   // Clean Palette (Consistent with the project)
-  final Color primaryGreen = const Color(0xFF0D9488);
-  final Color primaryBlue = const Color(0xFF1D4ED8);
-  final Color darkNavy = const Color(0xFF1E1B4B);
+  final Color primaryGreen = AppColors.primary;
+  final Color primaryBlue = AppColors.infoBlue;
+  final Color darkNavy = AppColors.textDark;
   final Color textSecondary = const Color(0xFF64748B);
   final Color textMuted = const Color(0xFF94A3B8);
   final Color bgLight = AppColors.backgroundColor;
-  final Color borderColor = const Color(0xFFE2E8F0);
+  final Color borderColor = AppColors.borderColor;
 
   Future<void> _pickImage() async {
     final result = await FilePicker.pickFiles(
@@ -65,6 +65,13 @@ class _TambahDokumentasiPageState extends State<TambahDokumentasiPage> {
     }
   }
 
+  Future<File> _saveTempFile(Uint8List bytes) async {
+    final tempDir = Directory.systemTemp;
+    final tempFile = File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await tempFile.writeAsBytes(bytes);
+    return tempFile;
+  }
+
   Future<void> _saveDokumentasi() async {
     if (!_formKey.currentState!.validate()) return;
     if (_pickedFile == null) {
@@ -78,20 +85,13 @@ class _TambahDokumentasiPageState extends State<TambahDokumentasiPage> {
       String? imageUrl;
 
       final file = File(_pickedFile!.path!);
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final path = 'gallery/$fileName';
-
       final compressedBytes = await _compressImage(file);
-      
-      if (compressedBytes != null) {
-        await supabase.storage.from('dokumentasi').uploadBinary(path, compressedBytes);
-        imageUrl = supabase.storage.from('dokumentasi').getPublicUrl(path);
-      } else {
-        await supabase.storage.from('dokumentasi').upload(path, file);
-        imageUrl = supabase.storage.from('dokumentasi').getPublicUrl(path);
-      }
+      // Upload via backend storage
+      imageUrl = await apiService.uploadFile('dokumentasi', compressedBytes != null
+          ? (await _saveTempFile(compressedBytes))
+          : file);
 
-      await supabase.from('documentation').insert({
+      await apiService.insert('documentation', {
         'title': _titleController.text,
         'description': _descController.text,
         'image_url': imageUrl,

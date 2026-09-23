@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image/image.dart' as img;
@@ -22,18 +22,18 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
   late TextEditingController _descController;
   PlatformFile? _pickedFile;
   bool _isLoading = false;
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
 
   bool get _isMobile => MediaQuery.of(context).size.width < 900;
 
   // Clean Palette (Consistent with the project)
-  final Color primaryGreen = const Color(0xFF0D9488);
-  final Color primaryBlue = const Color(0xFF1D4ED8);
-  final Color darkNavy = const Color(0xFF1E1B4B);
+  final Color primaryGreen = AppColors.primary;
+  final Color primaryBlue = AppColors.infoBlue;
+  final Color darkNavy = AppColors.textDark;
   final Color textSecondary = const Color(0xFF64748B);
   final Color textMuted = const Color(0xFF94A3B8);
   final Color bgLight = AppColors.backgroundColor;
-  final Color borderColor = const Color(0xFFE2E8F0);
+  final Color borderColor = AppColors.borderColor;
 
   @override
   void initState() {
@@ -72,6 +72,13 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
     }
   }
 
+  Future<File> _saveTempFile(Uint8List bytes) async {
+    final tempDir = Directory.systemTemp;
+    final tempFile = File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await tempFile.writeAsBytes(bytes);
+    return tempFile;
+  }
+
   Future<void> _updateDokumentasi() async {
     if (!_formKey.currentState!.validate()) return;
     
@@ -79,55 +86,22 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
 
     try {
       String? imageUrl = widget.dokumentasi['image_url'];
-      String? oldImageUrl = widget.dokumentasi['image_url'];
 
       if (_pickedFile != null) {
         final file = File(_pickedFile!.path!);
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final path = 'gallery/$fileName';
-
         final compressedBytes = await _compressImage(file);
-        
-        if (compressedBytes != null) {
-          await supabase.storage.from('dokumentasi').uploadBinary(path, compressedBytes);
-          imageUrl = supabase.storage.from('dokumentasi').getPublicUrl(path);
-        } else {
-          await supabase.storage.from('dokumentasi').upload(path, file);
-          imageUrl = supabase.storage.from('dokumentasi').getPublicUrl(path);
-        }
-
-        // Hapus gambar lama dari storage jika berhasil upload gambar baru
-        if (oldImageUrl != null && oldImageUrl.isNotEmpty) {
-          try {
-            final String bucketName = 'dokumentasi';
-            final urls = oldImageUrl.split(',');
-            List<String> filesToDelete = [];
-            
-            for (var url in urls) {
-              if (url.trim().isNotEmpty) {
-                final uri = Uri.parse(url.trim());
-                final pathSegments = uri.pathSegments;
-                final bucketIdx = pathSegments.indexOf(bucketName);
-                if (bucketIdx != -1 && bucketIdx < pathSegments.length - 1) {
-                  filesToDelete.add(pathSegments.sublist(bucketIdx + 1).join('/'));
-                }
-              }
-            }
-
-            if (filesToDelete.isNotEmpty) {
-              await supabase.storage.from(bucketName).remove(filesToDelete);
-            }
-          } catch (e) {
-            debugPrint('Error deleting old storage file: $e');
-          }
-        }
+        // Upload via backend storage
+        imageUrl = await apiService.uploadFile('dokumentasi', compressedBytes != null
+            ? (await _saveTempFile(compressedBytes))
+            : file);
+        // Old image deletion is handled server-side or ignored for now
       }
 
-      await supabase.from('documentation').update({
+      await apiService.update('documentation', widget.dokumentasi['id'].toString(), {
         'title': _titleController.text,
         'description': _descController.text,
         'image_url': imageUrl,
-      }).eq('id', widget.dokumentasi['id']);
+      });
 
       if (mounted) {
         NotificationHelper.show(context, 'Dokumentasi berhasil diperbarui');

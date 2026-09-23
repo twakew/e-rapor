@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:laporsekolaherapor/services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
+import '../login&register/loginpath.dart';
 import '../utils/notification_helper.dart';
 
 class GantiPasswordPage extends StatefulWidget {
@@ -22,24 +23,28 @@ class _GantiPasswordPageState extends State<GantiPasswordPage> {
   Future<void> _updatePassword() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (!ApiService().isLoggedIn) {
+      NotificationHelper.show(context, 'Sesi tidak valid. Silakan masuk kembali.', isError: true);
+      return;
+    }
+
+    final password = _passwordController.text.trim();
     setState(() => _isLoading = true);
 
     try {
-      await Supabase.instance.client.auth.updateUser(
-        UserAttributes(password: _passwordController.text.trim()),
-      );
+      await ApiService().updatePassword(password);
+      await ApiService().logout();
 
       if (mounted) {
-        NotificationHelper.show(context, 'Kata sandi berhasil diperbarui');
-        Navigator.pop(context);
+        NotificationHelper.show(context, 'Kata sandi berhasil diperbarui. Silakan masuk kembali.');
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+          (route) => false,
+        );
       }
-    } on AuthException catch (error) {
+    } catch (_) {
       if (mounted) {
-        NotificationHelper.show(context, error.message, isError: true);
-      }
-    } catch (error) {
-      if (mounted) {
-        NotificationHelper.show(context, 'Terjadi kesalahan tidak terduga', isError: true);
+        NotificationHelper.show(context, 'Gagal memperbarui kata sandi. Cek koneksi Anda.', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

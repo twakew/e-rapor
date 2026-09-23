@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:laporsekolaherapor/services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
 
@@ -14,15 +15,13 @@ class DaftarAkunPage extends StatefulWidget {
 }
 
 class _DaftarAkunPageState extends State<DaftarAkunPage> {
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
   List<Map<String, dynamic>> _users = [];
   List<Map<String, dynamic>> _filteredUsers = [];
   List<Map<String, dynamic>> _profiles = [];
   List<Map<String, dynamic>> _students = [];
   bool _isLoading = true;
   final TextEditingController _searchController = TextEditingController();
-  StreamSubscription? _profilesSubscription;
-  StreamSubscription? _studentsSubscription;
 
   @override
   void initState() {
@@ -31,13 +30,17 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   }
 
   Future<void> _checkIsAdmin() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) {
+    if (!apiService.isLoggedIn) {
       setState(() => _isLoading = false);
       return;
     }
     try {
-      final data = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      final prefs = await SharedPreferences.getInstance();
+      String token = prefs.getString('jwt_token') ?? '';
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      String userId = decodedToken['id'];
+
+      final data = await apiService.getRow('profiles', userId);
       final role = data['role']?.toString() ?? '';
       final isAdmin = role == 'Admin' || role == 'Super Admin';
       if (!isAdmin) {
@@ -47,7 +50,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         }
         return;
       }
-      _setupRealtimeStreams();
+      _fetchUsers();
     } catch (e) {
       debugPrint('Error checking role: $e');
       setState(() => _isLoading = false);
@@ -56,49 +59,39 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
   @override
   void dispose() {
-    _profilesSubscription?.cancel();
-    _studentsSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  void _setupRealtimeStreams() {
-    // 1. Stream untuk Profiles (Admin & Guru)
-    _profilesSubscription = supabase
-        .from('profiles')
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: false)
-        .listen((data) {
-      if (mounted) {
-        setState(() {
-          _profiles = data.where((u) => u['is_verified'] == true).toList();
-          _combineAndFilter();
-          _isLoading = false;
-        });
-      }
-    });
+  Future<void> _fetchUsers() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
 
-    // 2. Stream untuk Students (Siswa)
-    _studentsSubscription = supabase
-        .from('students')
-        .stream(primaryKey: ['nis'])
-        .order('created_at', ascending: false)
-        .listen((data) {
+    try {
+      final profilesData = await apiService.getTable('profiles');
+      final studentsData = await apiService.getTable('students');
+
       if (mounted) {
         setState(() {
-          _students = data.map((s) => {
+          _profiles = profilesData.where((u) => u['is_verified'] == true).toList().cast<Map<String, dynamic>>();
+          
+          _students = studentsData.map((s) => {
             'id': s['nis'],
             'full_name': s['name'],
             'email': '${s['nis']}@siswa.id',
             'role': 'Siswa',
             'is_verified': true,
             'created_at': s['created_at'],
-          }).toList();
+          }).toList().cast<Map<String, dynamic>>();
+
           _combineAndFilter();
           _isLoading = false;
         });
       }
-    });
+    } catch (e) {
+      debugPrint('Error fetching users: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _combineAndFilter() {
@@ -115,10 +108,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     _filterUsers(_searchController.text);
   }
 
-  Future<void> _fetchUsers() async {
-    // Fungsi ini sekarang hanya untuk manual refresh jika stream macet
-    _setupRealtimeStreams();
-  }
+
 
   void _filterUsers(String query) {
     setState(() {
@@ -136,42 +126,49 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
   Future<void> _deleteUser(String userId) async {
     try {
-      await supabase.rpc('delete_user_by_admin', params: {'target_user_id': userId});
+      await apiService.callRpc('delete_user_by_admin', params: {'target_user_id': userId});
       
       if (mounted) {
         NotificationHelper.show(context, 'Akun berhasil dihapus sepenuhnya!');
         _fetchUsers();
       }
-    } on PostgrestException catch (e) {
+    } catch (e) {
       if (mounted) {
-        String errorMessage = 'Gagal menghapus: ${e.message}';
-        if (e.message.contains('foreign key constraint')) {
+        String errorMessage = 'Gagal menghapus: $e';
+        if (e.toString().contains('foreign key constraint')) {
           errorMessage = 'Gagal: Akun ini masih terikat dengan data lain (Guru/Siswa).';
         }
         NotificationHelper.show(context, errorMessage, isError: true);
       }
-    } catch (e) {
+      // Fallback try delete from profiles table directly
       try {
-        await supabase.from('profiles').delete().eq('id', userId);
+        await apiService.delete('profiles', userId);
         if (mounted) {
           NotificationHelper.show(context, 'Profil berhasil dihapus.');
           _fetchUsers();
         }
       } catch (e2) {
         if (mounted) {
-          NotificationHelper.show(context, 'Gagal menghapus. Pastikan SQL Function sudah ada.', isError: true);
+          NotificationHelper.show(context, 'Gagal menghapus profil.', isError: true);
         }
       }
     }
   }
 
-  void _showDeleteConfirmation(Map<String, dynamic> userData) {
-    final currentUserId = supabase.auth.currentUser?.id;
+  Future<void> _showDeleteConfirmation(Map<String, dynamic> userData) async {
+    final prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('jwt_token') ?? '';
+    String? currentUserId;
+    if (token.isNotEmpty) {
+      currentUserId = JwtDecoder.decode(token)['id'];
+    }
+
     if (userData['id'] == currentUserId) {
-      NotificationHelper.show(context, 'Anda tidak dapat menghapus akun Anda sendiri', isError: true);
+      if (mounted) NotificationHelper.show(context, 'Anda tidak dapat menghapus akun Anda sendiri', isError: true);
       return;
     }
 
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -244,13 +241,16 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredUsers.isEmpty
                     ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: _filteredUsers.length,
-                        itemBuilder: (context, index) {
-                          return _buildUserCard(_filteredUsers[index]);
-                        },
+                    : RefreshIndicator(
+                        onRefresh: _fetchUsers,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                          itemCount: _filteredUsers.length,
+                          itemBuilder: (context, index) {
+                            return _buildUserCard(_filteredUsers[index]);
+                          },
+                        ),
                       ),
           ),
         ],
@@ -402,13 +402,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppColors.cardShadow,
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),

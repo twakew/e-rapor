@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:laporsekolaherapor/services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
 import '../utils/push_notification_service.dart';
@@ -14,7 +16,7 @@ class VerifikasiAkunPage extends StatefulWidget {
 }
 
 class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
   List<Map<String, dynamic>> _pendingUsers = [];
   bool _isLoading = true;
 
@@ -25,13 +27,17 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
   }
 
   Future<void> _checkIsAdmin() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) {
+    if (!apiService.isLoggedIn) {
       _finishLoad();
       return;
     }
     try {
-      final data = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      final prefs = await SharedPreferences.getInstance();
+      String token = prefs.getString('jwt_token') ?? '';
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      String userId = decodedToken['id'];
+
+      final data = await apiService.getRow('profiles', userId);
       final role = data['role']?.toString() ?? '';
       final isAdmin = role == 'Admin' || role == 'Super Admin';
       if (!isAdmin) {
@@ -55,14 +61,16 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
   Future<void> _fetchPendingUsers() async {
     setState(() => _isLoading = true);
     try {
-      final data = await supabase
-          .from('profiles')
-          .select()
-          .eq('is_verified', false)
-          .order('created_at', ascending: false);
+      final data = await apiService.getTable('profiles');
+      final pendingData = data.where((u) => u['is_verified'] == false).toList();
+      pendingData.sort((a, b) {
+        String dateA = a['created_at'] ?? '';
+        String dateB = b['created_at'] ?? '';
+        return dateB.compareTo(dateA);
+      });
       
       setState(() {
-        _pendingUsers = List<Map<String, dynamic>>.from(data);
+        _pendingUsers = List<Map<String, dynamic>>.from(pendingData);
         _isLoading = false;
       });
     } catch (e) {
@@ -77,18 +85,25 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
     final userId = userData['id'];
     final fullName = userData['full_name'] ?? 'Guru';
 
+    debugPrint('[VERIFY] Starting verification...');
+    debugPrint('[VERIFY] userId: $userId');
+    debugPrint('[VERIFY] role: $role');
+    debugPrint('[VERIFY] userData: $userData');
+
     try {
       // Verifikasi via RPC admin (bypass RLS butuh guard is_admin di DB).
       // Update langsung tak jalan: policy profiles_update_own hanya kolom
       // non-sensitif, role/is_verified dikunci.
-      await supabase.rpc('verify_user_by_admin',
+      final result = await apiService.callRpc('verify_user_by_admin',
           params: {'p_user_id': userId, 'p_role': role});
-      
+
+      debugPrint('[VERIFY] Result: $result');
+
       // --- KIRIM NOTIFIKASI KE USER BAHWA SUDAH AKTIF ---
       try {
         await PushNotificationService.sendNotification(
           userId: userId,
-          title: 'AKUN AKTIF ✅',
+          title: 'AKUN AKTIF',
           message: 'Telah diverifikasi sebagai $role $fullName, silakan login.',
           data: {'include_staff': false},
         );
@@ -101,6 +116,7 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
         _fetchPendingUsers();
       }
     } catch (e) {
+      debugPrint('[VERIFY] Error: $e');
       if (mounted) {
         NotificationHelper.show(context, 'Gagal verifikasi: $e', isError: true);
       }
@@ -332,7 +348,7 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
   Future<void> _rejectUser(String userId) async {
     try {
       // Hapus menggunakan RPC agar auth.users juga terhapus
-      await supabase.rpc('delete_user_by_admin', params: {'target_user_id': userId});
+      await apiService.callRpc('delete_user_by_admin', params: {'target_user_id': userId});
       
       if (mounted) {
         NotificationHelper.show(context, 'Pendaftaran berhasil ditolak dan dihapus.');

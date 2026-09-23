@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
 
@@ -17,7 +17,7 @@ class TambahKelasPage extends StatefulWidget {
 class _TambahKelasPageState extends State<TambahKelasPage> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
 
   final _nameCtrl = TextEditingController();
   final _rombelCtrl = TextEditingController();
@@ -32,8 +32,8 @@ class _TambahKelasPageState extends State<TambahKelasPage> {
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
   final Color textMuted = AppColors.textMuted;
-  final Color borderColor = const Color(0xFFE2E8F0);
-  final Color errorRed = const Color(0xFFEF4444);
+  final Color borderColor = AppColors.borderColor;
+  final Color errorRed = AppColors.errorRed;
 
   @override
   void initState() {
@@ -48,8 +48,9 @@ class _TambahKelasPageState extends State<TambahKelasPage> {
 
   Future<void> _fetchTeachers() async {
     try {
-      final res = await supabase.from('teachers').select('id, name, wali_kelas, rombel_wali, angkatan_wali').order('name');
+      final res = await apiService.getTable('teachers');
       final List<Map<String, dynamic>> teachers = List<Map<String, dynamic>>.from(res);
+      teachers.sort((a, b) => (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString()));
       
       if (mounted) {
         setState(() {
@@ -125,35 +126,44 @@ class _TambahKelasPageState extends State<TambahKelasPage> {
         final oldBatch = widget.classData!['batch'] ?? widget.classData!['angkatan'];
 
         // 2. Clear previous homeroom teacher for this class
-        await supabase.from('teachers')
-            .update({'wali_kelas': null, 'rombel_wali': null, 'angkatan_wali': null})
-            .eq('wali_kelas', oldClassName)
-            .eq('rombel_wali', oldRombel)
-            .eq('angkatan_wali', oldBatch);
+        final matchingTeachers = await apiService.getTable('teachers', queryParameters: {
+          'wali_kelas': oldClassName,
+          'rombel_wali': oldRombel,
+          'angkatan_wali': oldBatch,
+        });
+        for (var t in matchingTeachers) {
+          await apiService.update('teachers', t['id'].toString(), {
+            'wali_kelas': null, 'rombel_wali': null, 'angkatan_wali': null
+          });
+        }
 
         // 3. Update class data
-        await supabase.from('classes').update(data).eq('id', widget.classData!['id']);
+        await apiService.update('classes', widget.classData!['id'].toString(), data);
         
         // 4. Update student records as well (if they exist and depend on these fields)
-        await supabase.from('students')
-            .update({'class': className, 'rombel': rombel, 'batch': batch})
-            .eq('class', oldClassName)
-            .eq('rombel', oldRombel)
-            .eq('batch', oldBatch);
+        final matchingStudents = await apiService.getTable('students', queryParameters: {
+          'class': oldClassName,
+          'rombel': oldRombel,
+          'batch': oldBatch,
+        });
+        for (var s in matchingStudents) {
+          await apiService.update('students', s['id'].toString(), {
+            'class': className, 'rombel': rombel, 'batch': batch
+          });
+        }
 
         if (mounted) NotificationHelper.show(context, 'Berhasil memperbarui data kelas');
       } else {
-        await supabase.from('classes').insert(data);
+        await apiService.insert('classes', data);
         if (mounted) NotificationHelper.show(context, 'Berhasil menambah kelas baru');
       }
 
-      // 5. Assign new homeroom teacher
       if (_selectedTeacher != null) {
-        await supabase.from('teachers').update({
+        await apiService.update('teachers', _selectedTeacher!['id'].toString(), {
           'wali_kelas': className,
           'rombel_wali': rombel,
           'angkatan_wali': batch,
-        }).eq('id', _selectedTeacher!['id']);
+        });
       }
 
       if (mounted) {
@@ -195,14 +205,19 @@ class _TambahKelasPageState extends State<TambahKelasPage> {
         final oldBatch = widget.classData!['batch'] ?? widget.classData!['angkatan'];
 
         // 1. Clear homeroom teacher assignment
-        await supabase.from('teachers')
-            .update({'wali_kelas': null, 'rombel_wali': null, 'angkatan_wali': null})
-            .eq('wali_kelas', oldClassName)
-            .eq('rombel_wali', oldRombel)
-            .eq('angkatan_wali', oldBatch);
+        final matchingTeachers = await apiService.getTable('teachers', queryParameters: {
+          'wali_kelas': oldClassName,
+          'rombel_wali': oldRombel,
+          'angkatan_wali': oldBatch,
+        });
+        for (var t in matchingTeachers) {
+          await apiService.update('teachers', t['id'].toString(), {
+            'wali_kelas': null, 'rombel_wali': null, 'angkatan_wali': null
+          });
+        }
 
         // 2. Delete class
-        await supabase.from('classes').delete().eq('id', widget.classData!['id']);
+        await apiService.delete('classes', widget.classData!['id'].toString());
         
         if (mounted) {
           NotificationHelper.show(context, 'Kelas berhasil dihapus');
@@ -236,7 +251,7 @@ class _TambahKelasPageState extends State<TambahKelasPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: borderColor),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
+                  boxShadow: AppColors.cardShadow,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:laporsekolaherapor/services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
 import '../utils/push_notification_service.dart';
@@ -36,27 +36,21 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await Supabase.instance.client.auth.signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-        data: {'full_name': _nameController.text.trim()},
+      final response = await ApiService().register(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _nameController.text.trim(),
       );
 
-      if (response.user != null) {
-        final userId = response.user!.id;
-
-        // Profil dibuat otomatis oleh trigger DB (handle_new_user) saat signup,
-        // jadi tak perlu insert manual dari sisi app.
+      if (response['user'] != null) {
+        final userId = response['user']['id'].toString();
         final fullName = _nameController.text.trim();
         await PushNotificationService.requestPermission();
         PushNotificationService.login(userId);
         
-        // Beri jeda 1 detik agar proses login OneSignal selesai
         await Future.delayed(const Duration(seconds: 1));
 
-        // 3. KIRIM NOTIFIKASI (Hanya ke Admin)
         try {
-          // A. Notif ke Admin (Wajib di-await agar JWT masih valid)
           await PushNotificationService.sendNotification(
             userId: null, 
             title: 'PENDAFTARAN BARU 👤',
@@ -71,23 +65,20 @@ class _RegisterPageState extends State<RegisterPage> {
           debugPrint('Gagal kirim notif registrasi: $e');
         }
 
-        // 4. PAKSA SIGN OUT (Sangat Penting!)
-        // Supabase otomatis login setelah signUp, kita harus keluarkan 
-        // supaya dia tidak bisa masuk dashboard sebelum diverifikasi.
-        await Supabase.instance.client.auth.signOut();
+        // Tidak perlu signout khusus karena ApiService().register tidak menyimpan session
       }
 
       if (mounted) {
         NotificationHelper.show(context, 'Registrasi Berhasil! Akun Anda sedang menunggu verifikasi admin.');
         Navigator.pop(context);
       }
-    } on AuthException catch (error) {
-      if (mounted) {
-        NotificationHelper.show(context, error.message, isError: true);
-      }
     } catch (error) {
       if (mounted) {
-        NotificationHelper.show(context, 'Terjadi kesalahan tidak terduga', isError: true);
+        String errMsg = 'Terjadi kesalahan tidak terduga';
+        if (error.toString().contains('Email sudah digunakan') || error.toString().contains('already registered')) {
+            errMsg = 'Email sudah digunakan!';
+        }
+        NotificationHelper.show(context, errMsg, isError: true);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

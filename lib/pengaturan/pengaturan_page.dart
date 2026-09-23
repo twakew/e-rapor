@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:laporsekolaherapor/services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
 import '../utils/push_notification_service.dart';
@@ -20,7 +21,7 @@ class PengaturanPage extends StatefulWidget {
 }
 
 class _PengaturanPageState extends State<PengaturanPage> {
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
   String _userRole = 'User';
 
   @override
@@ -30,13 +31,18 @@ class _PengaturanPageState extends State<PengaturanPage> {
   }
 
   Future<void> _fetchUserRole() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) {
+    final prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('jwt_token') ?? '';
+    
+    if (token.isEmpty) {
       if (mounted) setState(() => _userRole = 'User');
       return;
     }
     try {
-      final data = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      String userId = decodedToken['id'];
+
+      final data = await apiService.getRow('profiles', userId);
       final role = data['role']?.toString() ?? 'User';
       // Normalisasi Super Admin -> Admin supaya UI konsisten
       if (mounted) setState(() => _userRole = role == 'Super Admin' ? 'Admin' : role);
@@ -54,7 +60,7 @@ class _PengaturanPageState extends State<PengaturanPage> {
     await prefs.remove('student_nis');
     await prefs.remove('student_class');
     await prefs.remove('user_role');
-    await supabase.auth.signOut();
+    await apiService.logout();
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,

@@ -32,7 +32,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
   final Color textMuted = AppColors.textMuted;
-  final Color borderColor = const Color(0xFFE2E8F0);
+  final Color borderColor = AppColors.borderColor;
 
   @override
   void initState() {
@@ -169,7 +169,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: AppColors.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +239,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: AppColors.cardShadow,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -30,10 +30,11 @@ class DetailRaporPage extends StatefulWidget {
 class _DetailRaporPageState extends State<DetailRaporPage> {
   bool _isPrinting = false;
   DateTime? _reportDate;
+  final apiService = ApiService();
 
   // --- Theme Palette (Teal & Navy) ---
-  final Color primaryGreen = const Color(0xFF0D9488);
-  final Color darkNavy = const Color(0xFF1E1B4B);
+  final Color primaryGreen = AppColors.primary;
+  final Color darkNavy = AppColors.textDark;
   final Color textSecondary = const Color(0xFF64748B);
   final Color textMuted = const Color(0xFF94A3B8);
   final Color bgLight = AppColors.backgroundColor;
@@ -75,11 +76,10 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
     if (picked != null && picked != _reportDate) {
       setState(() => _isPrinting = true); // Use isPrinting as a general loading state for simplicity
       try {
-        await Supabase.instance.client
-            .from('assessments')
-            .update({'report_date': picked.toIso8601String()})
-            .eq('student_id', widget.student['id'])
-            .eq('semester', widget.semester);
+        await apiService.updateBulk('assessments', {
+          'student_id': widget.student['id'],
+          'semester': widget.semester,
+        }, {'report_date': picked.toIso8601String()});
 
         setState(() {
           _reportDate = picked;
@@ -117,11 +117,10 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
 
     if (confirm == true) {
       try {
-        await Supabase.instance.client
-            .from('assessments')
-            .delete()
-            .eq('student_id', widget.student['id'])
-            .eq('semester', widget.semester);
+        await apiService.deleteBulk('assessments', {
+          'student_id': widget.student['id'],
+          'semester': widget.semester,
+        });
         
         if (mounted) {
           NotificationHelper.show(context, 'Rapor berhasil dihapus');
@@ -136,7 +135,6 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
   Future<void> _generateAndPrintPDF() async {
     setState(() => _isPrinting = true);
     try {
-      final supabase = Supabase.instance.client;
       final pdf = pw.Document(
         theme: pw.ThemeData.withFont(
           base: pw.Font.times(),
@@ -144,7 +142,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
         ),
       );
 
-      final schoolResponse = await supabase.from('school_data').select().maybeSingle();
+      final school = await apiService.getFirstRow('school_data') ?? {};
 
       Future<pw.MemoryImage?> loadImage(String path) async {
         try {
@@ -169,7 +167,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
         pdf: pdf,
         student: widget.student,
         assessments: widget.assessments,
-        school: schoolResponse ?? {},
+        school: school,
         logoImage: images[0],
         planetImg: images[1],
         rocketImg: images[2],

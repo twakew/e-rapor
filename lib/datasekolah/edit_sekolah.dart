@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
 
@@ -27,13 +27,13 @@ class _EditSekolahPageState extends State<EditSekolahPage> {
   late TextEditingController _addressController;
 
   bool _isLoading = false;
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
 
   // --- Theme Colors ---
   final Color primaryTeal = AppColors.primary;
   final Color textDark = AppColors.textDark;
   final Color bgLight = AppColors.backgroundColor;
-  final Color borderColor = const Color(0xFFE2E8F0);
+  final Color borderColor = AppColors.borderColor;
 
   @override
   void initState() {
@@ -84,13 +84,11 @@ class _EditSekolahPageState extends State<EditSekolahPage> {
         'address': _addressController.text,
       };
 
-      // Gunakan upsert dengan ID agar tidak membuat baris baru terus-menerus
       if (widget.schoolData['id'] != null) {
-        // Pastikan ID dikirim sebagai tipe aslinya (biasanya int)
-        updatedData['id'] = widget.schoolData['id'];
+        await apiService.update('school_data', widget.schoolData['id'].toString(), updatedData);
+      } else {
+        await apiService.insert('school_data', updatedData);
       }
-
-      await supabase.from('school_data').upsert(updatedData);
 
       if (mounted) {
         NotificationHelper.show(context, 'Data profil sekolah berhasil disimpan');

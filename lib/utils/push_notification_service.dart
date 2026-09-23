@@ -1,5 +1,7 @@
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:laporsekolaherapor/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
@@ -35,32 +37,28 @@ class PushNotificationService {
     _updateExternalId();
   }
 
-  static void _updateExternalId() {
+  static Future<void> _updateExternalId() async {
     if (!isSupported) return;
     
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      OneSignal.login(user.id);
+    final prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('jwt_token') ?? '';
+    if (token.isNotEmpty) {
+      final decodedToken = JwtDecoder.decode(token);
+      final userId = decodedToken['id'];
+      OneSignal.login(userId);
       
-      // Sync tagging role jika data profile tersedia
-      Supabase.instance.client
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle()
-          .then((data) {
-            if (data != null && data['role'] != null) {
-              setTag('role', data['role'].toString().toLowerCase());
-            }
-          });
+      try {
+        final apiService = ApiService();
+        final data = await apiService.getRow('profiles', userId);
+        if (data.isNotEmpty && data['role'] != null) {
+          setTag('role', data['role'].toString().toLowerCase());
+        }
 
-      // Update token/id di profile jika masih dibutuhkan
-      Supabase.instance.client
-          .from('profiles')
-          .update({'onesignal_id': user.id})
-          .eq('id', user.id)
-          .then((_) => debugPrint('OneSignal External ID updated'))
-          .catchError((e) => debugPrint('Error updating OneSignal ID: $e'));
+        await apiService.update('profiles', userId, {'onesignal_id': userId});
+        debugPrint('OneSignal External ID updated');
+      } catch (e) {
+        debugPrint('Error updating OneSignal ID: $e');
+      }
     }
   }
 
@@ -105,15 +103,12 @@ class PushNotificationService {
     Map<String, dynamic>? data,
   }) async {
     try {
-      await Supabase.instance.client.functions.invoke(
-        'send-push-notification',
-        body: {
-          'user_id': userId, // Jika null, bisa diatur di function untuk kirim ke Admin
-          'title': title,
-          'message': message,
-          if (data != null) 'data': data,
-        },
-      );
+      await ApiService().callRpc('send-push-notification', params: {
+        'user_id': userId,
+        'title': title,
+        'message': message,
+        if (data != null) 'data': data,
+      });
       debugPrint('Notifikasi dikirim ke: $userId');
     } catch (e) {
       debugPrint('Gagal mengirim notifikasi: $e');

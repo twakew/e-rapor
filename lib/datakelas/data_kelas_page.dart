@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'detail_kelas_page.dart';
 import '../dataguru/detail_guru.dart';
@@ -26,8 +26,8 @@ class _DataKelasPageState extends State<DataKelasPage> {
   final Color textSecondary = AppColors.textSecondary;
   final Color textMuted = AppColors.textMuted;
 
-  final supabase = Supabase.instance.client;
-  final List<StreamSubscription> _subscriptions = [];
+  final apiService = ApiService();
+  Timer? _refreshTimer;
   bool _loading = true;
 
   bool get _isMobile => MediaQuery.of(context).size.width < 900;
@@ -56,36 +56,14 @@ class _DataKelasPageState extends State<DataKelasPage> {
 
   @override
   void dispose() {
-    for (var sub in _subscriptions) {
-      sub.cancel();
-    }
+    _refreshTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   void _initRealtime() {
     _fetchData();
-    
-    // Gunakan Channel global untuk dengerin SEMUA perubahan data
-    final channel = supabase.channel('public:data_kelas_global');
-    
-    channel.onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
-      table: 'students',
-      callback: (payload) {
-        debugPrint('New Class/Student detected: ${payload.eventType}');
-        _fetchData(); // Trigger refresh total buat generate kartu baru
-      },
-    ).onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
-      table: 'teachers',
-      callback: (payload) {
-        debugPrint('Wali Kelas change detected: ${payload.eventType}');
-        _fetchData(); // Update nama wali di semua kartu
-      },
-    ).subscribe();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchData());
   }
 
   Future<void> _fetchData() async {
@@ -97,29 +75,25 @@ class _DataKelasPageState extends State<DataKelasPage> {
       if (widget.userRole == 'User') {
         try {
           // Coba ambil data ringkas siswa secara publik (untuk metadata kelas)
-          final directRes = await supabase.from('students').select('class, rombel, batch, status, gender');
+          final directRes = await apiService.getTable('students');
           if (directRes.isNotEmpty) {
-            studentsData = directRes as List;
+            studentsData = directRes;
           } else {
             // Siswa: sekelas sendiri (RPC bulk dump dihapus di DB).
-            final rpc = await supabase.rpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
+            final rpc = await apiService.callRpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
             studentsData = rpc is List ? rpc : [];
           }
         } catch (e) {
           debugPrint('User Student Fetch Error: $e');
         }
       } else {
-        final studentsResponse = await supabase.from('students').select('class, rombel, batch, status, gender');
-        studentsData = studentsResponse as List;
+        studentsData = await apiService.getTable('students');
       }
       
       // 2. Ambil data guru (Wali Kelas) secara langsung tanpa RPC
       List<dynamic> teachersData = [];
       try {
-        final resT = await supabase
-            .from('teachers')
-            .select('id, name, role, subject, wali_kelas, angkatan_wali, rombel_wali');
-        teachersData = resT as List;
+        teachersData = await apiService.getTable('teachers');
         debugPrint('Fetched ${teachersData.length} teachers for matching');
       } catch (e) {
         debugPrint('Teachers fetch failed: $e');
@@ -162,7 +136,6 @@ class _DataKelasPageState extends State<DataKelasPage> {
         String batchName = parts[2];
 
         String scClass = superClean(className);
-        String scRombel = superClean(rombelName);
         String scBatch = superClean(batchName);
 
         // Cari Wali Kelas (Logika Paling Akurat: Match Kelas & Angkatan Saja)
@@ -321,7 +294,7 @@ class _DataKelasPageState extends State<DataKelasPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         children: [

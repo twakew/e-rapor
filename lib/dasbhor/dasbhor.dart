@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:laporsekolaherapor/services/api_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'package:laporsekolaherapor/datasiwa/data_siswa.dart';
@@ -46,18 +48,17 @@ class DasbhorPage extends StatefulWidget {
 class _DasbhorPageState extends State<DasbhorPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   
-  // --- Color Palette (Now using central AppColors) ---
-  final Color primaryTeal = AppColors.primary; 
-  final Color secondaryTeal = AppColors.secondary;
-  final Color accentGreen = AppColors.accent;
+  // --- Color Palette (Warm Monochrome) ---
+  final Color primaryDark = AppColors.primary;
+  final Color secondaryGray = AppColors.secondary;
+  final Color accentWarm = AppColors.accent;
   final Color backgroundColor = AppColors.backgroundColor;
-  final Color sidebarBg = Colors.white;
+  final Color sidebarBg = AppColors.cardWhite;
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
   final Color textMuted = AppColors.textMuted;
   
-  final user = Supabase.instance.client.auth.currentUser;
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
   
   int _totalSiswa = 0;
   int _totalGuru = 0;
@@ -85,9 +86,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
   String _userDisplayName = '';
   late Timer _timer;
   DateTime _currentTime = DateTime.now();
-  final List<StreamSubscription> _statsSubscriptions = [];
-  StreamSubscription? _schoolSubscription;
-  StreamSubscription? _profileSubscription;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
@@ -97,9 +96,15 @@ class _DasbhorPageState extends State<DasbhorPage> {
     _userRole = widget.initialRole ?? 'User';
     _fetchStats();
     _fetchSchoolInfo(); 
-    _setupRealtimeStats();
-    _setupSchoolRealtime();
     _setupProfileListener();
+    
+    // Poll data every 30 seconds instead of realtime streams
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        _fetchStats();
+        _fetchSchoolInfo();
+      }
+    });
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
@@ -112,17 +117,14 @@ class _DasbhorPageState extends State<DasbhorPage> {
   @override
   void dispose() {
     _timer.cancel();
-    _schoolSubscription?.cancel();
-    _profileSubscription?.cancel();
-    for (var sub in _statsSubscriptions) {
-      sub.cancel();
-    }
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
   Future<void> _fetchSchoolInfo() async {
     try {
-      final data = await supabase.from('school_data').select('name, curriculum').maybeSingle();
+      final List<dynamic> dataList = await apiService.getTable('school_data');
+      final data = dataList.isNotEmpty ? dataList.first : null;
       if (mounted && data != null) {
         setState(() {
           _schoolName = data['name'] ?? 'LAPOR SEKOLAH';
@@ -140,81 +142,48 @@ class _DasbhorPageState extends State<DasbhorPage> {
     }
   }
 
-  void _setupSchoolRealtime() {
-    _schoolSubscription = supabase
-        .from('school_data')
-        .stream(primaryKey: ['id'])
-        .listen((data) {
-      if (mounted && data.isNotEmpty) {
-        setState(() {
-          _schoolName = data.first['name'] ?? 'LAPOR SEKOLAH';
-          String curr = data.first['curriculum']?.toString() ?? '';
-          if (curr.isNotEmpty) {
-            final match = RegExp(r'\d{4}').firstMatch(curr);
-            if (match != null) {
-              _academicYear = match.group(0)!;
-            }
-          }
-        });
-      }
-    });
-  }
-
-  void _setupRealtimeStats() {
-    final tables = ['students', 'teachers', 'documentation'];
-    for (var table in tables) {
-      try {
-        final sub = supabase.from(table).stream(primaryKey: ['id']).listen((_) {
-          _fetchStats();
-        }, onError: (e) => debugPrint('Stream error on $table: $e'));
-        _statsSubscriptions.add(sub);
-      } catch (e) {
-        debugPrint('Realtime not available for $table');
-      }
-    }
-  }
-
-  void _setupProfileListener() {
-    final currentUser = supabase.auth.currentUser;
-    
+  Future<void> _setupProfileListener() async {
     // Initial value
     setState(() {
       _userDisplayName = widget.studentName ?? (_userRole == 'Admin' ? 'Admin' : 'User');
     });
 
-    if (currentUser != null && (_userRole == 'Admin' || _userRole == 'Guru')) {
-      // Listen to profile table for Admin/Guru
-      _profileSubscription = supabase
-          .from('profiles')
-          .stream(primaryKey: ['id'])
-          .eq('id', currentUser.id)
-          .listen((data) {
-            if (mounted && data.isNotEmpty) {
-              setState(() {
-                _userDisplayName = data.first['full_name'] ?? (_userRole == 'Admin' ? 'Admin' : 'Guru');
-              });
-            }
+    final prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('jwt_token') ?? '';
+    
+    if (token.isNotEmpty && (_userRole == 'Admin' || _userRole == 'Guru')) {
+      final decodedToken = JwtDecoder.decode(token);
+      final userId = decodedToken['id'];
+      
+      try {
+        final profileData = await apiService.getRow('profiles', userId);
+        if (mounted && profileData.isNotEmpty) {
+          setState(() {
+            _userDisplayName = profileData['full_name'] ?? (_userRole == 'Admin' ? 'Admin' : 'Guru');
           });
+        }
+      } catch (e) {
+        debugPrint('Profile error: $e');
+      }
     } else if (widget.studentNis != null) {
-      // Listen to students table for Login via NIS
-      _profileSubscription = supabase
-          .from('students')
-          .stream(primaryKey: ['id'])
-          .eq('nis', widget.studentNis!)
-          .listen((data) {
-            if (mounted && data.isNotEmpty) {
-              setState(() {
-                _userDisplayName = data.first['name'] ?? 'Siswa';
-              });
-            }
+      try {
+        final List<dynamic> studentDataList = await apiService.getTable('students');
+        final studentData = studentDataList.firstWhere((s) => s['nis'] == widget.studentNis, orElse: () => null);
+        if (mounted && studentData != null) {
+          setState(() {
+            _userDisplayName = studentData['name'] ?? 'Siswa';
           });
+        }
+      } catch (e) {
+        debugPrint('Student error: $e');
+      }
     }
   }
 
   Future<void> _fetchStats() async {
     // Stat siswa/kelas: agregat RPC (staff) — tak ada dump baris siswa ke User.
     try {
-      final List<dynamic> stats = await supabase.rpc('get_student_stats_summary');
+      final List<dynamic> stats = await apiService.callRpc('get_student_stats_summary');
       int totalAktif = 0;
       Set<String> uniqueClasses = {};
 
@@ -239,7 +208,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
 
     // 2. Fetch Teachers from Public RPC (kolom non-sensitif saja)
     try {
-      final response = await supabase.rpc('get_public_teachers');
+      final response = await apiService.callRpc('get_public_teachers');
       if (mounted && response != null) {
         setState(() => _totalGuru = (response as List).length);
       }
@@ -249,8 +218,8 @@ class _DasbhorPageState extends State<DasbhorPage> {
 
     // 3. Fetch Documentation (RLS: baca publik)
     try {
-      final dok = await supabase.from('documentation').select('id');
-      if (mounted) setState(() => _totalDokumentasi = (dok as List).length);
+      final dok = await apiService.getTable('documentation');
+      if (mounted) setState(() => _totalDokumentasi = dok.length);
     } catch (e) {
       debugPrint('Documentation fetch error: $e');
     }
@@ -280,16 +249,19 @@ class _DasbhorPageState extends State<DasbhorPage> {
             _lastQuitTime = now;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Row(
+                content: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.white, size: 20),
-                    SizedBox(width: 12),
-                    Text('Tekan sekali lagi untuk keluar', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Icon(Icons.info_outline, color: AppColors.cardWhite, size: 18),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Tekan sekali lagi untuk keluar',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ],
                 ),
-                backgroundColor: AppColors.primary.withValues(alpha: 0.9),
+                backgroundColor: AppColors.primary,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                 duration: const Duration(seconds: 2),
                 margin: const EdgeInsets.fromLTRB(20, 0, 20, 100),
               ),
@@ -354,21 +326,16 @@ class _DasbhorPageState extends State<DasbhorPage> {
       height: isMobile ? 60 : 70,
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          )
-        ],
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.borderColor),
+        boxShadow: AppColors.subtleShadow,
       ),
       child: Row(
         children: [
           if (isDesktop)
             IconButton(
-              icon: const Icon(Icons.menu_rounded, color: Color(0xFF64748B)),
+              icon: Icon(Icons.menu_rounded, color: textSecondary),
               onPressed: () {
                 setState(() => _isSidebarCollapsed = !_isSidebarCollapsed);
               },
@@ -381,13 +348,22 @@ class _DasbhorPageState extends State<DasbhorPage> {
                   width: 32,
                   height: 32,
                   padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(color: primaryTeal.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.borderColor),
+                  ),
                   child: Image.asset('assets/logo_sekolah.png', fit: BoxFit.contain),
                 ),
                 const SizedBox(width: 10),
                 Text(
                   _schoolName.toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A), letterSpacing: 0.3),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    color: textDark,
+                    letterSpacing: 0.8,
+                  ),
                 ),
               ],
             ),
@@ -408,7 +384,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
 
   Widget _topBarNotificationIcon() {
     bool isMobile = MediaQuery.of(context).size.width < 600;
-    return Icon(Icons.notifications_none_rounded, color: const Color(0xFF64748B), size: isMobile ? 22 : 26);
+    return Icon(Icons.notifications_none_rounded, color: textSecondary, size: isMobile ? 22 : 24);
   }
 
   Widget _buildUserSection(String name) {
@@ -425,12 +401,12 @@ class _DasbhorPageState extends State<DasbhorPage> {
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: const Color(0xFFF1F5F9),
-            child: Icon(Icons.person_rounded, size: 20, color: const Color(0xFF64748B)),
+            backgroundColor: AppColors.accent,
+            child: Icon(Icons.person_rounded, size: 20, color: textSecondary),
           ),
           if (!isMobile) ...[
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF64748B)),
+            Icon(Icons.keyboard_arrow_down, size: 16, color: textSecondary),
           ],
         ],
       ),
@@ -450,8 +426,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: sidebarBg,
-        border: Border(right: BorderSide(color: Colors.grey.shade100)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(4, 0))],
+        border: Border(right: BorderSide(color: AppColors.borderColor)),
       ),
       child: Column(
         children: [
@@ -462,9 +437,13 @@ class _DasbhorPageState extends State<DasbhorPage> {
               children: [
                 Container(
                   width: 40,
-                  height: 40, 
+                  height: 40,
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: primaryTeal.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.borderColor),
+                  ),
                   child: Image.asset('assets/logo_sekolah.png', fit: BoxFit.contain),
                 ),
                 if (!effectivelyCollapsed) ...[
@@ -474,14 +453,23 @@ class _DasbhorPageState extends State<DasbhorPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _schoolName.toUpperCase(), 
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A), letterSpacing: 0.5),
+                          _schoolName.toUpperCase(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            color: textDark,
+                            letterSpacing: 0.8,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          _schoolSub, 
-                          style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                          _schoolSub,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -556,16 +544,16 @@ class _DasbhorPageState extends State<DasbhorPage> {
                   top: 8,
                   bottom: 8,
                   child: Container(
-                    width: 4,
+                    width: 3,
                     decoration: BoxDecoration(
-                      color: primaryTeal,
-                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(4)),
+                      color: primaryDark,
+                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(2)),
                     ),
                   ),
                 ),
               Material(
-                color: isParentActive ? primaryTeal.withValues(alpha: 0.08) : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+                color: isParentActive ? AppColors.accent : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
                 child: InkWell(
                   onTap: () {
                     if (hasDropdown && onExpand != null) {
@@ -573,20 +561,20 @@ class _DasbhorPageState extends State<DasbhorPage> {
                     } else {
                       _handleRestrictedAccess(label, index);
                       if (MediaQuery.of(context).size.width < 1100) {
-                        Navigator.pop(context); 
+                        Navigator.pop(context);
                       }
                     }
                   },
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: collapsed ? 0 : 8, vertical: 12),
                     child: Row(
                       mainAxisAlignment: collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
                       children: [
                         Icon(
-                          icon, 
-                          color: isParentActive ? primaryTeal : const Color(0xFF64748B), 
-                          size: 22
+                          icon,
+                          color: isParentActive ? primaryDark : textSecondary,
+                          size: 20
                         ),
                         if (!collapsed) ...[
                           const SizedBox(width: 12),
@@ -596,15 +584,18 @@ class _DasbhorPageState extends State<DasbhorPage> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: isParentActive ? primaryTeal : const Color(0xFF64748B),
-                                fontWeight: isParentActive ? FontWeight.bold : FontWeight.w600,
-                                fontSize: 14,
+                                color: isParentActive ? primaryDark : textSecondary,
+                                fontWeight: isParentActive ? FontWeight.w700 : FontWeight.w500,
+                                fontSize: 13,
                               ),
                             ),
                           ),
                           if (hasDropdown)
-                            Icon(isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, 
-                                 color: isParentActive ? primaryTeal : const Color(0xFF64748B), size: 18),
+                            Icon(
+                              isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                              color: isParentActive ? primaryDark : textSecondary,
+                              size: 16
+                            ),
                         ],
                       ],
                     ),
@@ -625,7 +616,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 16, vertical: 14),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.grey.shade100)),
+        border: Border(top: BorderSide(color: AppColors.borderColor)),
       ),
       child: Row(
         mainAxisAlignment: collapsed ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
@@ -634,15 +625,15 @@ class _DasbhorPageState extends State<DasbhorPage> {
           if (!collapsed)
             Expanded(
               child: Text(
-                '© $_academicYear TK IT AL-HANIF LEDENG',
+                '© $_academicYear $_schoolName',
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 9, 
-                  color: Color(0xFF94A3B8), 
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
+                style: TextStyle(
+                  fontSize: 8,
+                  color: textMuted,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
@@ -652,14 +643,14 @@ class _DasbhorPageState extends State<DasbhorPage> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.backgroundColor,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade100),
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.borderColor),
                 ),
                 child: Icon(
                   collapsed ? Icons.chevron_right : Icons.chevron_left,
-                  size: 18,
-                  color: const Color(0xFF64748B),
+                  size: 16,
+                  color: textSecondary,
                 ),
               ),
             ),
@@ -925,16 +916,16 @@ class _DasbhorPageState extends State<DasbhorPage> {
     bool isMobile = screenWidth < 600;
     
     final List<Map<String, dynamic>> menuItems = [
-      {'icon': Icons.fact_check_rounded, 'label': 'Absensi', 'index': 5, 'color': const Color(0xFF6366F1)},
-      {'icon': Icons.people_rounded, 'label': 'Data Siswa', 'index': 1, 'color': const Color(0xFF10B981)},
-      {'icon': Icons.person_rounded, 'label': 'Data Guru', 'index': 28, 'color': const Color(0xFF3B82F6)},
-      {'icon': Icons.business_rounded, 'label': 'Data Kelas', 'index': 12, 'color': const Color(0xFF8B5CF6)},
-      if (_userRole != 'User') {'icon': Icons.edit_note_rounded, 'label': 'Penilaian', 'index': 3, 'color': const Color(0xFFEC4899)},
-      {'icon': Icons.picture_as_pdf_rounded, 'label': 'E-Rapor PDF', 'index': 13, 'color': const Color(0xFFF43F5E)},
-      {'icon': Icons.school_rounded, 'label': 'Data Angkatan', 'index': 6, 'color': const Color(0xFFF59E0B)},
-      {'icon': Icons.collections_rounded, 'label': 'Dokumentasi', 'index': 4, 'color': const Color(0xFF06B6D4)},
-      {'icon': Icons.account_balance_rounded, 'label': 'Profil Sekolah', 'index': 7, 'color': const Color(0xFF64748B)},
-      {'icon': Icons.settings_rounded, 'label': 'Pengaturan', 'index': 8, 'color': const Color(0xFF475569)},
+      {'icon': Icons.fact_check_rounded, 'label': 'Absensi', 'index': 5, 'color': AppColors.paleBlue},
+      {'icon': Icons.people_rounded, 'label': 'Data Siswa', 'index': 1, 'color': AppColors.paleGreen},
+      {'icon': Icons.person_rounded, 'label': 'Data Guru', 'index': 28, 'color': AppColors.paleYellow},
+      {'icon': Icons.business_rounded, 'label': 'Data Kelas', 'index': 12, 'color': AppColors.paleRed},
+      if (_userRole != 'User') {'icon': Icons.edit_note_rounded, 'label': 'Penilaian', 'index': 3, 'color': AppColors.paleBlue},
+      {'icon': Icons.picture_as_pdf_rounded, 'label': 'E-Rapor PDF', 'index': 13, 'color': AppColors.paleGreen},
+      {'icon': Icons.school_rounded, 'label': 'Data Angkatan', 'index': 6, 'color': AppColors.paleYellow},
+      {'icon': Icons.collections_rounded, 'label': 'Dokumentasi', 'index': 4, 'color': AppColors.paleRed},
+      {'icon': Icons.account_balance_rounded, 'label': 'Profil Sekolah', 'index': 7, 'color': AppColors.accent},
+      {'icon': Icons.settings_rounded, 'label': 'Pengaturan', 'index': 8, 'color': AppColors.accent},
     ];
 
     return Container(
@@ -989,22 +980,15 @@ class _DasbhorPageState extends State<DasbhorPage> {
     );
   }
 
-  Widget _buildMenuCard(IconData icon, String label, int index, Color color) {
+  Widget _buildMenuCard(IconData icon, String label, int index, Color accentBg) {
     return InkWell(
       onTap: () => setState(() => _selectedIndex = index),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-          border: Border.all(color: Colors.grey.shade100),
+          color: AppColors.cardWhite,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.borderColor),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1012,10 +996,10 @@ class _DasbhorPageState extends State<DasbhorPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+                color: accentBg,
+                borderRadius: BorderRadius.circular(6),
               ),
-              child: Icon(icon, color: color, size: 28),
+              child: Icon(icon, color: textSecondary, size: 24),
             ),
             const SizedBox(height: 12),
             Text(
@@ -1023,8 +1007,9 @@ class _DasbhorPageState extends State<DasbhorPage> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: textDark,
+                letterSpacing: 0.1,
               ),
             ),
           ],
@@ -1057,41 +1042,29 @@ class _DasbhorPageState extends State<DasbhorPage> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: isMobile ? 16 : 20, horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          )
-        ],
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: primaryTeal.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.paleBlue,
+              borderRadius: BorderRadius.circular(4),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.campaign_rounded, color: primaryTeal, size: 18),
-              ],
-            ),
+            child: Icon(Icons.campaign_rounded, color: AppColors.paleBlueText, size: 16),
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 16),
           Expanded(
             child: _RunningTextTicker(
-              text: "✨ Selamat Datang di Sistem E-Rapor Digital TK-IT AL-HANIF LEDENG ✨ Mewujudkan Generasi Cerdas, Kreatif, dan Berakhlak Mulia",
+              text: "Selamat Datang di Sistem E-Rapor Digital TK-IT AL-HANIF LEDENG — Mewujudkan Generasi Cerdas, Kreatif, dan Berakhlak Mulia",
               style: TextStyle(
-                fontSize: isMobile ? 13 : 14, 
-                fontWeight: FontWeight.bold, 
+                fontSize: isMobile ? 12 : 13,
+                fontWeight: FontWeight.w600,
                 color: textDark,
-                letterSpacing: 0.5,
+                letterSpacing: 0.2,
               ),
             ),
           ),
@@ -1113,18 +1086,11 @@ class _DasbhorPageState extends State<DasbhorPage> {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 20 : 28),
+      padding: EdgeInsets.all(isMobile ? 24 : 32),
       decoration: BoxDecoration(
-        color: Colors.white, // Ganti ke putih agar shadow menonjol
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            blurRadius: 25,
-            offset: const Offset(0, 12),
-          )
-        ],
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1136,13 +1102,22 @@ class _DasbhorPageState extends State<DasbhorPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Visualisasi Data", 
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textDark, letterSpacing: -0.5)
+                    "Visualisasi Data",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: textDark,
+                      letterSpacing: -0.3,
+                    )
                   ),
                   const SizedBox(height: 4),
                   Text(
                     "Perbandingan ringkasan statistik",
-                    style: TextStyle(fontSize: 10, color: textSecondary, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -1150,9 +1125,9 @@ class _DasbhorPageState extends State<DasbhorPage> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppColors.accent,
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                child: Icon(Icons.auto_graph_rounded, color: primaryTeal, size: 18),
+                child: Icon(Icons.auto_graph_rounded, color: textSecondary, size: 16),
               ),
             ],
           ),
@@ -1167,12 +1142,16 @@ class _DasbhorPageState extends State<DasbhorPage> {
                   enabled: true,
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipColor: (_) => AppColors.primary,
-                    tooltipRoundedRadius: 10,
-                    tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    tooltipRoundedRadius: 4,
+                    tooltipPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
                         rod.toY.round().toString(),
-                        const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                        const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
                       );
                     },
                   ),
@@ -1184,7 +1163,12 @@ class _DasbhorPageState extends State<DasbhorPage> {
                       showTitles: true,
                       reservedSize: 32,
                       getTitlesWidget: (value, meta) {
-                        const style = TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w800, fontSize: 11);
+                        final style = TextStyle(
+                          color: textMuted,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                          letterSpacing: 0.3,
+                        );
                         String label = '';
                         switch (value.toInt()) {
                           case 0: label = 'Siswa'; break;
@@ -1203,14 +1187,14 @@ class _DasbhorPageState extends State<DasbhorPage> {
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 barGroups: [
-                  _makeBarGroup(0, _totalSiswa.toDouble(), const Color(0xFF10B981), const Color(0xFF34D399), maxVal),
-                  _makeBarGroup(1, _totalGuru.toDouble(), const Color(0xFF3B82F6), const Color(0xFF60A5FA), maxVal),
-                  _makeBarGroup(2, _totalKelas.toDouble(), const Color(0xFFA855F7), const Color(0xFFC084FC), maxVal),
-                  _makeBarGroup(3, _totalDokumentasi.toDouble(), const Color(0xFFF59E0B), const Color(0xFFFBBF24), maxVal),
+                  _makeBarGroup(0, _totalSiswa.toDouble(), AppColors.chartGreen, maxVal),
+                  _makeBarGroup(1, _totalGuru.toDouble(), AppColors.chartBlue, maxVal),
+                  _makeBarGroup(2, _totalKelas.toDouble(), AppColors.chartGray, maxVal),
+                  _makeBarGroup(3, _totalDokumentasi.toDouble(), AppColors.chartAmber, maxVal),
                 ],
               ),
-              duration: const Duration(milliseconds: 800), // Animasi mantul
-              curve: Curves.elasticOut,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeInOut,
             ),
           ),
         ],
@@ -1218,23 +1202,19 @@ class _DasbhorPageState extends State<DasbhorPage> {
     );
   }
 
-  BarChartGroupData _makeBarGroup(int x, double y, Color color1, Color color2, double maxVal) {
+  BarChartGroupData _makeBarGroup(int x, double y, Color color, double maxVal) {
     return BarChartGroupData(
       x: x,
       barRods: [
         BarChartRodData(
           toY: y,
-          gradient: LinearGradient(
-            colors: [color1, color2],
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-          ),
-          width: 20,
-          borderRadius: BorderRadius.circular(10), // Bentuk kapsul sempurna
+          color: color,
+          width: 24,
+          borderRadius: BorderRadius.circular(4),
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
-            toY: maxVal + (maxVal * 0.2), 
-            color: const Color(0xFFE0E7FF), // Jalur Indigo Soft yang serasi
+            toY: maxVal + (maxVal * 0.2),
+            color: AppColors.accent,
           ),
         ),
       ],
@@ -1250,59 +1230,17 @@ class _DasbhorPageState extends State<DasbhorPage> {
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.heroGradient,
-          stops: const [0.0, 0.7, 1.0],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          )
-        ],
+        color: AppColors.heroBackground,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Stack(
         children: [
           Positioned(
-            top: -50,
-            right: -30,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    Colors.white.withValues(alpha: 0.25),
-                    Colors.white.withValues(alpha: 0.0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -40,
-            left: -20,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFF10B981).withValues(alpha: 0.1),
-              ),
-            ),
-          ),
-          
-          Positioned(
             bottom: isDesktop ? -48 : (isMobile ? -36 : -42),
             right: isDesktop ? -30 : (isMobile ? -50 : -40),
             child: Opacity(
-              opacity: 0.9,
+              opacity: 0.15,
               child: Image.asset(
                 'assets/tk-it.png',
                 height: isDesktop ? 280 : (isMobile ? 180 : 240),
@@ -1324,46 +1262,41 @@ class _DasbhorPageState extends State<DasbhorPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
+                          color: AppColors.cardWhite,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppColors.borderColor),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Assalamu\'alaikum, $name',
-                              style: const TextStyle(
-                                fontSize: 10, 
-                                fontWeight: FontWeight.w800, 
-                                color: AppColors.heroText,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Text('👋', style: TextStyle(fontSize: 11)),
-                          ],
+                        child: Text(
+                          'Assalamu\'alaikum, $name',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.heroText,
+                            letterSpacing: 0.2,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 10),
                       Text(
                         isMobile ? 'E-Rapor Digital' : 'E-Rapor $_schoolName',
                         style: TextStyle(
-                          fontSize: isDesktop ? 22 : 18, 
-                          fontWeight: FontWeight.w900, 
-                          color: AppColors.heroText, 
-                          height: 1.1,
-                          letterSpacing: -0.5,
+                          fontSize: isDesktop ? 20 : 17,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.heroText,
+                          height: 1.2,
+                          letterSpacing: -0.3,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
-                        'Kelola data akademik dengan efisien.',
+                        'Kelola data akademik dengan efisien',
                         style: TextStyle(
-                          fontSize: 12, 
-                          color: AppColors.heroText.withValues(alpha: 0.8),
+                          fontSize: 12,
+                          color: AppColors.heroText.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w500,
+                          letterSpacing: 0.1,
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -1371,17 +1304,17 @@ class _DasbhorPageState extends State<DasbhorPage> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           _heroInfoCard(
-                            Icons.access_time_filled_rounded, 
-                            DateFormat('HH:mm', 'id_ID').format(_currentTime), 
-                            'Waktu', 
-                            const Color(0xFF0EA5E9)
+                            Icons.access_time_filled_rounded,
+                            DateFormat('HH:mm', 'id_ID').format(_currentTime),
+                            'Waktu',
+                            AppColors.paleBlue
                           ),
                           const SizedBox(width: 12),
                           _heroInfoCard(
-                            Icons.calendar_month_rounded, 
-                            isMobile ? DateFormat('d MMM yy', 'id_ID').format(_currentTime) : DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(_currentTime), 
-                            'Tanggal', 
-                            const Color(0xFF10B981)
+                            Icons.calendar_month_rounded,
+                            isMobile ? DateFormat('d MMM yy', 'id_ID').format(_currentTime) : DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(_currentTime),
+                            'Tanggal',
+                            AppColors.paleGreen
                           ),
                         ],
                       ),
@@ -1400,14 +1333,8 @@ class _DasbhorPageState extends State<DasbhorPage> {
     return Container(
       height: 80,
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          )
-        ],
+        color: AppColors.cardWhite,
+        border: Border(top: BorderSide(color: AppColors.borderColor)),
       ),
       child: Stack(
         clipBehavior: Clip.none,
@@ -1444,33 +1371,27 @@ class _DasbhorPageState extends State<DasbhorPage> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: active ? primaryTeal : Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: primaryTeal.withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                )
-              ],
+              color: active ? primaryDark : AppColors.cardWhite,
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: active ? Colors.white : primaryTeal.withValues(alpha: 0.1),
-                width: 3,
+                color: active ? primaryDark : AppColors.borderColor,
+                width: 2,
               ),
             ),
             child: Icon(
               icon,
-              color: active ? Colors.white : primaryTeal,
-              size: 28,
+              color: active ? AppColors.cardWhite : textSecondary,
+              size: 24,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: active ? primaryTeal : textSecondary,
+              color: active ? primaryDark : textSecondary,
               fontSize: 10,
-              fontWeight: active ? FontWeight.bold : FontWeight.w600,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              letterSpacing: 0.2,
             ),
           ),
         ],
@@ -1485,29 +1406,30 @@ class _DasbhorPageState extends State<DasbhorPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: active ? primaryTeal : textSecondary, size: 24),
+          Icon(icon, color: active ? primaryDark : textSecondary, size: 22),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: active ? primaryTeal : textSecondary, fontSize: 10, fontWeight: active ? FontWeight.bold : FontWeight.normal)),
+          Text(
+            label,
+            style: TextStyle(
+              color: active ? primaryDark : textSecondary,
+              fontSize: 10,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              letterSpacing: 0.2,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _heroInfoCard(IconData icon, String value, String label, Color color) {
+  Widget _heroInfoCard(IconData icon, String value, String label, Color bgColor) {
     bool isMobile = MediaQuery.of(context).size.width < 600;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 14, vertical: isMobile ? 8 : 12),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 12, vertical: isMobile ? 8 : 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1515,23 +1437,32 @@ class _DasbhorPageState extends State<DasbhorPage> {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              color: bgColor,
+              borderRadius: BorderRadius.circular(4),
             ),
-            child: Icon(icon, color: color, size: isMobile ? 16 : 20),
+            child: Icon(icon, color: textSecondary, size: isMobile ? 14 : 16),
           ),
-          SizedBox(width: isMobile ? 8 : 12),
+          SizedBox(width: isMobile ? 8 : 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 value,
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: isMobile ? 12 : 14, color: textDark),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: isMobile ? 11 : 13,
+                  color: textDark,
+                ),
               ),
               Text(
                 label,
-                style: TextStyle(fontSize: isMobile ? 9 : 10, color: textSecondary, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: isMobile ? 9 : 10,
+                  color: textSecondary,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.2,
+                ),
               ),
             ],
           ),

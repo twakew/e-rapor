@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'input_nilai_page.dart';
 
@@ -22,7 +22,7 @@ class PenilaianPage extends StatefulWidget {
 }
 
 class _PenilaianPageState extends State<PenilaianPage> {
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
   bool _isLoading = true;
   List<dynamic> _students = [];
   List<dynamic> _filteredStudents = [];
@@ -35,8 +35,8 @@ class _PenilaianPageState extends State<PenilaianPage> {
   bool get _isMobile => MediaQuery.of(context).size.width < 900;
 
   // --- Clean Palette based on Image ---
-  final Color primaryGreen = const Color(0xFF0D9488);
-  final Color darkNavy = const Color(0xFF1E1B4B);
+  final Color primaryGreen = AppColors.primary;
+  final Color darkNavy = AppColors.textDark;
   final Color textSecondary = const Color(0xFF64748B);
   final Color textMuted = const Color(0xFF94A3B8);
   final Color bgLight = AppColors.backgroundColor;
@@ -58,15 +58,14 @@ class _PenilaianPageState extends State<PenilaianPage> {
       List<dynamic> assessmentsResponse;
       if (widget.userRole == 'User' && widget.studentNis != null) {
         // Siswa: data sendiri via RPC (direct select ditolak RLS).
-        response = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
-        assessmentsResponse = await supabase.rpc('get_my_rapor', params: {'p_nis': widget.studentNis!});
+        response = await apiService.callRpc('get_my_profile', params: {'p_nis': widget.studentNis!});
+        assessmentsResponse = await apiService.callRpc('get_my_rapor', params: {'p_nis': widget.studentNis!});
       } else {
-        response = await supabase.from('students').select().order('name', ascending: true);
+        final res = await apiService.getTable('students');
+        response = res..sort((a, b) => (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString()));
 
         // Fetch assessment counts to determine completion status
-        assessmentsResponse = await supabase
-            .from('assessments')
-            .select('student_id, semester');
+        assessmentsResponse = await apiService.getTable('assessments');
       }
       
       Map<String, Map<int, int>> completionMap = {};
@@ -663,10 +662,10 @@ class _PenilaianPageState extends State<PenilaianPage> {
     if (confirm == true) {
       try {
         setState(() => _isLoading = true);
-        var query = supabase.from('assessments').delete().eq('student_id', student['id']);
-        if (semester != null) query = query.eq('semester', semester);
+        final where = {'student_id': student['id']};
+        if (semester != null) where['semester'] = semester;
+        await apiService.deleteBulk('assessments', where);
         
-        await query;
         await _fetchData();
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data berhasil dihapus')));
       } catch (e) {
@@ -710,11 +709,10 @@ class _PenilaianPageState extends State<PenilaianPage> {
     );
 
     try {
-      final assessments = await supabase
-          .from('assessments')
-          .select()
-          .eq('student_id', student['id'])
-          .eq('semester', semester);
+      final assessments = await apiService.getTable('assessments', queryParameters: {
+        'student_id': student['id'],
+        'semester': semester,
+      });
 
       if (mounted) {
         Navigator.pop(context); // Tutup loading

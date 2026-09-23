@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:laporsekolaherapor/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'login&register/loginpath.dart';
@@ -60,8 +61,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 
   Future<void> _navigateToNext() async {
-    final supabase = Supabase.instance.client;
-    final session = supabase.auth.currentSession;
+    final apiService = ApiService();
     final prefs = await SharedPreferences.getInstance();
     
     String? detectedRole;
@@ -69,26 +69,29 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     String? studentNis = prefs.getString('student_nis');
     String? studentClass = prefs.getString('student_class');
 
-    // JIKA ADA SESI SUPABASE (ADMIN/GURU)
-    if (session != null) {
-      final user = session.user;
+    // JIKA ADA SESI LOGIN VIA API (GURU/ADMIN)
+    if (apiService.isLoggedIn) {
       try {
-        final data = await supabase
-            .from('profiles')
-            .select('role, is_verified')
-            .eq('id', user.id)
-            .maybeSingle();
-        if (data != null && data['is_verified'] == true) {
-          // Normalisasi Super Admin -> Admin supaya UI konsisten
-          detectedRole = data['role'].toString() == 'Super Admin'
-              ? 'Admin'
-              : data['role'].toString();
-        } else {
-          // Jika akun belum diverifikasi, paksa sign out agar balik ke login
-          await supabase.auth.signOut();
+        // Ambil ID dari JWT Token
+        String token = prefs.getString('jwt_token') ?? '';
+        if (token.isNotEmpty) {
+           Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+           String userId = decodedToken['id'];
+
+           final data = await apiService.getRow('profiles', userId);
+           if (data['is_verified'] == true) {
+             // Normalisasi Super Admin -> Admin supaya UI konsisten
+             detectedRole = data['role'].toString() == 'Super Admin'
+                 ? 'Admin'
+                 : data['role'].toString();
+           } else {
+             // Jika akun belum diverifikasi, paksa sign out agar balik ke login
+             await apiService.logout();
+           }
         }
       } catch (e) {
         debugPrint('Error pre-fetching role: $e');
+        await apiService.logout();
       }
     } 
     // JIKA TIDAK ADA SESI TAPI ADA DATA SISWA (USER)
@@ -101,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => 
-            (session != null || studentNis != null)
+            (apiService.isLoggedIn || studentNis != null)
               ? DasbhorPage(
                   initialRole: detectedRole,
                   studentName: studentName,

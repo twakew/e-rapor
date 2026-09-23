@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart' as fp;
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
 import '../utils/push_notification_service.dart';
@@ -30,14 +30,14 @@ class InputNilaiPage extends StatefulWidget {
 }
 
 class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProviderStateMixin {
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
   bool _isLoading = false;
   late TabController _mainTabController;
   DateTime _reportDate = DateTime.now();
 
   // --- Clean Palette based on Project Style (Teal) ---
-  final Color primaryGreen = const Color(0xFF0D9488);
-  final Color darkNavy = const Color(0xFF1E1B4B);
+  final Color primaryGreen = AppColors.primary;
+  final Color darkNavy = AppColors.textDark;
   final Color textSecondary = const Color(0xFF64748B);
   final Color textMuted = const Color(0xFF94A3B8);
   final Color bgLight = AppColors.backgroundColor;
@@ -314,13 +314,18 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
         if (score.isNotEmpty || notes.isNotEmpty || material.isNotEmpty || (_selectedImages[cat]?.isNotEmpty ?? false)) {
           // 1. Bersihkan duplikat kategori yang mirip (fuzzy) sebelum simpan
           // Ini untuk menghapus record lama seperti "STREAM" jika kita simpan sebagai "Dasar Literasi..."
+          // Note: Backend needs to handle this custom delete or we fetch and delete one by one
           if (cat == 'Dasar Literasi, Sains, Teknologi, Rekayasa, & Seni') {
-            await supabase.from('assessments')
-                .delete()
-                .eq('student_id', studentId)
-                .eq('semester', widget.initialSemester ?? 1)
-                .neq('id', _assessmentIds[cat] ?? -1) // Jangan hapus yang sedang kita edit
-                .or('category.ilike.%STREAM%,category.ilike.%DASAR LITERASI%');
+            final oldAssessments = await apiService.getTable('assessments', queryParameters: {
+              'student_id': studentId,
+              'semester': widget.initialSemester ?? 1
+            });
+            for (var a in oldAssessments) {
+              if (a['id'] != _assessmentIds[cat] && 
+                 (a['category'].toString().toUpperCase().contains('STREAM') || a['category'].toString().toUpperCase().contains('DASAR LITERASI'))) {
+                await apiService.delete('assessments', a['id'].toString());
+              }
+            }
           }
 
           // 2. Upload foto baru
@@ -335,17 +340,13 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
               }
             } else if (img is File) {
               // Buat nama file yang aman (Hanya Alphanumeric)
-              final safeCat = cat.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-              final fileName = '${DateTime.now().millisecondsSinceEpoch}_$safeCat.jpg';
-              final path = 'penilaian/$studentId/$fileName';
-
-              await supabase.storage.from('penilaian').upload(path, img);
-              final url = supabase.storage.from('penilaian').getPublicUrl(path);
+              // Upload via backend
+              final url = await apiService.uploadFile('penilaian', img);
               finalUrls.add(url);
             }
           }
 
-          await supabase.from('assessments').upsert({
+          await apiService.upsert('assessments', [{
             if (_assessmentIds[cat] != null) 'id': _assessmentIds[cat],
             'student_id': studentId,
             'category': cat,
@@ -357,7 +358,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
             'report_date': _reportDate.toIso8601String(),
             'is_published': false, // Selalu simpan sebagai Draft dulu
             'created_at': DateTime.now().toIso8601String(),
-          });
+          }], conflictColumn: 'id');
         }
       }
 

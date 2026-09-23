@@ -29,12 +29,12 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
 
   final Color primaryTeal = AppColors.primary;
   final Color primaryBlue = AppColors.secondary;
-  final Color darkNavy = const Color(0xFF1E1B4B);
+  final Color darkNavy = AppColors.textDark;
   final Color backgroundColor = AppColors.backgroundColor;
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
   final Color textMuted = AppColors.textMuted;
-  final Color borderColor = const Color(0xFFE2E8F0);
+  final Color borderColor = AppColors.borderColor;
 
   @override
   void initState() {
@@ -168,7 +168,7 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
+        boxShadow: AppColors.cardShadow,
         border: Border.all(color: borderColor.withValues(alpha: 0.5)),
       ),
       child: Row(
@@ -225,7 +225,7 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
+        boxShadow: AppColors.cardShadow,
         border: Border.all(color: borderColor),
       ),
       child: Column(
@@ -369,9 +369,7 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
           color: isLulus ? const Color(0xFFDCFCE7) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isLulus ? const Color(0xFFBBF7D0) : borderColor.withValues(alpha: 0.5)),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))
-          ],
+          boxShadow: AppColors.cardShadow,
         ),
         child: Row(
           children: [

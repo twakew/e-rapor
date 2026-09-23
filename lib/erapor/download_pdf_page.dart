@@ -1,6 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -18,8 +19,8 @@ class DownloadPdfPage extends StatefulWidget {
 }
 
 class _DownloadPdfPageState extends State<DownloadPdfPage> {
-  final supabase = Supabase.instance.client;
-  RealtimeChannel? _channel;
+  final apiService = ApiService();
+  Timer? _refreshTimer;
   bool _isLoading = true;
   int _selectedSemester = 1;
   Map<String, dynamic> _groupedHistory = {};
@@ -50,23 +51,13 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
 
   @override
   void dispose() {
-    _channel?.unsubscribe();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
   void _initRealtime() {
-    _channel = supabase.channel('public:rapor_history').onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
-      table: 'assessments',
-      callback: (payload) => _fetchHistory(showLoading: false),
-    ).onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
-      table: 'students',
-      callback: (payload) => _fetchHistory(showLoading: false),
-    );
-    _channel?.subscribe();
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchHistory(showLoading: false));
   }
 
   Future<void> _fetchHistory({bool showLoading = true}) async {
@@ -78,7 +69,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
       if (widget.userRole == 'User' && widget.studentNis != null) {
         // Siswa: rapor published milik sendiri via RPC (direct select
         // assessments ditolak RLS utk non-staff). RPC flat -> adaptor.
-        final rows = await supabase.rpc('get_my_rapor',
+        final rows = await apiService.callRpc('get_my_rapor',
             params: {'p_nis': widget.studentNis!.trim()});
         response = ((rows as List?) ?? [])
             .where((a) => _selectedSemester == 1
@@ -97,17 +88,22 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
                 })
             .toList();
       } else {
-        var query = supabase
-            .from('assessments')
-            .select('*, students!inner(*)');
-
-        if (_selectedSemester == 1) {
-          query = query.or('semester.eq.1,semester.is.null');
-        } else {
-          query = query.eq('semester', 2);
-        }
-
-        response = await query.order('created_at', ascending: false);
+        // Fetch assessments and students separately then join manually
+        final assessments = await apiService.getTable('assessments');
+        final students = await apiService.getTable('students');
+        
+        final studentMap = { for (var s in students) s['id']: s };
+        
+        response = assessments.where((a) {
+          final sem = a['semester'];
+          if (_selectedSemester == 1) return sem == 1 || sem == null;
+          return sem == 2;
+        }).map((a) {
+          return {
+            ...a,
+            'students': studentMap[a['student_id']]
+          };
+        }).toList();
       }
 
       final Map<String, dynamic> grouped = {};
@@ -187,8 +183,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
         ),
       );
       
-    final schoolResponse = await supabase.from('school_data').select().maybeSingle();
-    final school = schoolResponse ?? {};
+    final school = await apiService.getFirstRow('school_data') ?? {};
     final idsToProcess = targetIds ?? _groupedHistory.keys.toList();
     
     // Load icons
@@ -426,11 +421,12 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
       }
 
       // 2. Update assessments table
-      await supabase
-          .from('assessments')
-          .update({'is_published': true})
-          .inFilter('student_id', filteredIds)
-          .eq('semester', _pbSemester);
+      for (var sId in filteredIds) {
+        await apiService.updateBulk('assessments', {
+          'student_id': sId,
+          'semester': _pbSemester,
+        }, {'is_published': true});
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

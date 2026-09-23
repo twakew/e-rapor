@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../datasiwa/detail_siswa.dart';
 import '../dataguru/detail_guru.dart';
@@ -19,7 +19,7 @@ class DetailKelasPage extends StatefulWidget {
 }
 
 class _DetailKelasPageState extends State<DetailKelasPage> {
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
   bool _loading = true;
 
   bool get _isMobile => MediaQuery.of(context).size.width < 900;
@@ -33,13 +33,13 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
   // Realtime Data from Student DB
   double _rataKehadiran = 0;
 
-  final Color primaryBlue = const Color(0xFF1D4ED8);
-  final Color darkNavy = const Color(0xFF1E1B4B);
+  final Color primaryBlue = AppColors.infoBlue;
+  final Color darkNavy = AppColors.textDark;
   final Color backgroundColor = AppColors.backgroundColor;
   final Color textDark = const Color(0xFF0F172A);
   final Color textSecondary = const Color(0xFF64748B);
   final Color textMuted = const Color(0xFF94A3B8);
-  final Color borderColor = const Color(0xFFE2E8F0);
+  final Color borderColor = AppColors.borderColor;
 
   @override
   void initState() {
@@ -69,7 +69,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
       List<dynamic> students = [];
       try {
         if (widget.userRole == 'User') {
-          final res = await supabase.rpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
+          final res = await apiService.callRpc('get_my_classmates', params: {'p_nis': widget.studentNis ?? ''});
           List allS = res is List ? res : [];
 
           // Filter manual dengan toleransi tinggi
@@ -86,13 +86,12 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
             return match;
           }).toList();
         } else {
-          students = await supabase
-              .from('students')
-              .select()
-              .eq('class', widget.classData['kelas'])
-              .eq('rombel', widget.classData['rombel'])
-              .eq('batch', widget.classData['angkatan'])
-              .order('name');
+          students = await apiService.getTable('students', queryParameters: {
+            'class': widget.classData['kelas'],
+            'rombel': widget.classData['rombel'],
+            'batch': widget.classData['angkatan'],
+          });
+          students.sort((a, b) => (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString()));
         }
       } catch (e) {
         debugPrint('Students fetch error: $e');
@@ -103,9 +102,14 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
       try {
         List<dynamic> teachersData = [];
         if (widget.userRole == 'User') {
-          teachersData = await supabase.rpc('get_public_teachers');
+          // Fallback to table if rpc doesn't exist on rest api
+          try {
+            teachersData = await apiService.callRpc('get_public_teachers');
+          } catch (e) {
+            teachersData = await apiService.getTable('teachers');
+          }
         } else {
-          teachersData = await supabase.from('teachers').select();
+          teachersData = await apiService.getTable('teachers');
         }
         
         final List allTeachers = teachersData;
@@ -144,12 +148,19 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
           final firstDay = DateTime(now.year, now.month, 1).toIso8601String();
           final lastDay = DateTime(now.year, now.month + 1, 0).toIso8601String();
           
-          attendance = await supabase
-              .from('attendance')
-              .select('status')
-              .filter('student_id', 'in', studentIds)
-              .gte('date', firstDay)
-              .lte('date', lastDay);
+          // Fetch all attendance for now, filter in dart if backend doesn't support complex filters
+          final allAtt = await apiService.getTable('attendance');
+          attendance = allAtt.where((a) {
+            if (!studentIds.contains(a['student_id'])) return false;
+            try {
+              final d = DateTime.parse(a['date']);
+              final dFirst = DateTime.parse(firstDay);
+              final dLast = DateTime.parse(lastDay);
+              return d.isAfter(dFirst.subtract(const Duration(days: 1))) && d.isBefore(dLast.add(const Duration(days: 1)));
+            } catch (_) {
+              return false;
+            }
+          }).toList();
         }
       } catch (e) {
         debugPrint('Attendance fetch error: $e');
@@ -161,7 +172,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
           _filteredStudents = students;
           _teacherData = teacher;
           
-          if (attendance is List && attendance.isNotEmpty) {
+          if (attendance.isNotEmpty) {
             int totalAtt = attendance.length;
             int hadir = attendance.where((a) => a['status'] == 'Hadir').length;
             _rataKehadiran = (hadir / totalAtt) * 100;
@@ -392,7 +403,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
+          boxShadow: AppColors.cardShadow,
         ),
         child: Row(
           children: [
@@ -550,9 +561,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
               decoration: BoxDecoration(
                 color: isLulus ? const Color(0xFFDCFCE7) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))
-                ],
+                boxShadow: AppColors.cardShadow,
                 border: Border.all(color: isLulus ? const Color(0xFFBBF7D0) : Colors.grey.shade100),
               ),
               child: Row(

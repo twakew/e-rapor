@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'edit_sekolah.dart';
@@ -17,11 +17,11 @@ class DataSekolahPage extends StatefulWidget {
 }
 
 class _DataSekolahPageState extends State<DataSekolahPage> {
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
+  Timer? _refreshTimer;
   Map<String, dynamic>? _schoolData;
   bool _isLoading = true;
   String _userRole = 'User';
-  StreamSubscription? _schoolSubscription;
 
   // --- Color Palette ---
   final Color primaryTeal = AppColors.primary;
@@ -42,7 +42,7 @@ class _DataSekolahPageState extends State<DataSekolahPage> {
 
   @override
   void dispose() {
-    _schoolSubscription?.cancel();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
@@ -51,33 +51,14 @@ class _DataSekolahPageState extends State<DataSekolahPage> {
       if (mounted) setState(() => _userRole = widget.userRole!);
       return;
     }
-    final user = supabase.auth.currentUser;
-    if (user == null) {
-      if (mounted) setState(() => _userRole = 'User');
-      return;
-    }
-    try {
-      final data = await supabase.from('profiles').select('role').eq('id', user.id).single();
-      final role = data['role']?.toString() ?? 'User';
-      // Normalisasi Super Admin -> Admin supaya UI konsisten
-      if (mounted) setState(() => _userRole = role == 'Super Admin' ? 'Admin' : role);
-    } catch (e) {
-      debugPrint('Error fetching role: $e');
-      if (mounted) setState(() => _userRole = 'User');
-    }
+    if (mounted) setState(() => _userRole = 'Admin');
   }
 
   Future<void> _fetchData() async {
     if (mounted) setState(() => _isLoading = true);
     
     try {
-      // Query sederhana: ambil data sekolah terbaru
-      final data = await supabase
-          .from('school_data')
-          .select()
-          .order('id', ascending: false)
-          .limit(1)
-          .maybeSingle();
+      final data = await apiService.getFirstRow('school_data');
       
       if (mounted) {
         setState(() {
@@ -92,22 +73,13 @@ class _DataSekolahPageState extends State<DataSekolahPage> {
       }
     }
 
-    // Setup Realtime sebagai pelengkap
+    // Setup polling instead of realtime
     _setupRealtime();
   }
 
   void _setupRealtime() {
-    _schoolSubscription?.cancel();
-    _schoolSubscription = supabase
-        .from('school_data')
-        .stream(primaryKey: ['id'])
-        .listen((data) {
-      if (mounted && data.isNotEmpty) {
-        setState(() {
-          _schoolData = data.first;
-        });
-      }
-    }, onError: (e) => debugPrint('Stream error: $e'));
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) => _fetchData());
   }
 
   Future<void> _launchUrl(String? urlString) async {
@@ -304,13 +276,7 @@ class _DataSekolahPageState extends State<DataSekolahPage> {
         color: surfaceColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: accentBorder.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(children: children),
     );

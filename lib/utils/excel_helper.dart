@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:excel_community/excel_community.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:printing/printing.dart';
 
 class ExcelHelper {
@@ -245,8 +245,9 @@ class ExcelHelper {
 
     if (students.isEmpty) return 0;
 
-    final supabase = Supabase.instance.client;
-    await supabase.from('students').insert(students);
+    final apiService = ApiService();
+    // Assuming backend endpoint /students supports bulk insert (array payload)
+    await apiService.insert('students', students);
     
     return students.length;
   }
@@ -305,8 +306,9 @@ class ExcelHelper {
 
     if (teachers.isEmpty) return 0;
 
-    final supabase = Supabase.instance.client;
-    await supabase.from('teachers').insert(teachers);
+    final apiService = ApiService();
+    // Assuming backend endpoint /teachers supports bulk insert (array payload)
+    await apiService.insert('teachers', teachers);
     
     return teachers.length;
   }

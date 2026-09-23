@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
 import '../utils/push_notification_service.dart';
@@ -58,7 +58,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
   String _selectedStatus = 'Aktif';
   String? _selectedCurriculum;
   bool _isLoading = false;
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
 
   // --- Palette (Using central AppColors) ---
   final Color primaryTeal = AppColors.primary;
@@ -66,8 +66,8 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
   final Color textMuted = AppColors.textMuted;
-  final Color borderColor = const Color(0xFFE2E8F0);
-  final Color errorRed = const Color(0xFFEF4444);
+  final Color borderColor = AppColors.borderColor;
+  final Color errorRed = AppColors.errorRed;
 
   @override
   void initState() {
@@ -196,11 +196,11 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
       };
 
       if (widget.student != null) {
-        await supabase.from('students').update(data).eq('id', widget.student!['id']);
+        await apiService.update('students', widget.student!['id'].toString(), data);
         if (!mounted) return;
         NotificationHelper.show(context, 'Berhasil memperbarui data siswa');
       } else {
-        await supabase.from('students').insert(data);
+        await apiService.insert('students', data);
         if (!mounted) return;
         NotificationHelper.show(context, 'Berhasil menambah data siswa: ${_nameController.text}');
         
@@ -222,9 +222,6 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
       } else {
         Navigator.pop(context, true);
       }
-    } on PostgrestException catch (e) {
-      if (!mounted) return;
-      NotificationHelper.show(context, 'Error Database: ${e.message}', isError: true);
     } catch (e) {
       if (!mounted) return;
       NotificationHelper.show(context, 'Terjadi kesalahan: $e', isError: true);
@@ -605,7 +602,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

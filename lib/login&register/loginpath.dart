@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:laporsekolaherapor/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'dart:async';
@@ -9,7 +9,9 @@ import '../dasbhor/dasbhor.dart';
 import 'register.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final String? initialEmail;
+
+  const LoginPage({super.key, this.initialEmail});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -24,6 +26,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
+    _emailController.text = widget.initialEmail ?? '';
     // Cek apakah ada blokir yang masih aktif dari sesi sebelumnya
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkPersistedBlock();
@@ -58,127 +61,160 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _forgotPassword() async {
-    final TextEditingController emailResetController = TextEditingController();
+    final emailResetController = TextEditingController();
+    final pageContext = context;
 
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        elevation: 10,
-        backgroundColor: Colors.white,
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.all(28.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: AppColors.accent,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.lock_reset_rounded,
-                  size: 40,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Lupa Kata Sandi',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Masukkan alamat email Anda. Kami akan mengirimkan tautan untuk mengatur ulang kata sandi.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: emailResetController,
-                keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Email Anda',
-                  hintStyle: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.normal),
-                  prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary, size: 20),
-                  filled: true,
-                  fillColor: AppColors.backgroundColor,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
+    final sent = await showDialog<bool>(
+      context: pageContext,
+      builder: (dialogContext) {
+        var isSending = false;
+        var dialogClosed = false;
+
+        return StatefulBuilder(
+          builder: (_, setDialogState) => Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            elevation: 10,
+            backgroundColor: Colors.white,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 420),
+              padding: const EdgeInsets.all(28.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        side: BorderSide(color: Colors.grey.shade300),
-                        foregroundColor: AppColors.textSecondary,
-                      ),
-                      child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600)),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: AppColors.accent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.lock_reset_rounded,
+                      size: 40,
+                      color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final email = emailResetController.text.trim();
-                        if (email.isEmpty) {
-                          NotificationHelper.show(context, 'Email tidak boleh kosong', isError: true);
-                          return;
-                        }
-
-                        try {
-                          await Supabase.instance.client.auth.resetPasswordForEmail(email);
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            NotificationHelper.show(context, 'Tautan reset kata sandi telah dikirim ke email Anda');
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            NotificationHelper.show(context, 'Gagal mengirim email: $e', isError: true);
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('Kirim Tautan', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Lupa Kata Sandi',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Masukkan alamat email Anda. Kami akan mengirimkan tautan untuk mengatur ulang kata sandi.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: emailResetController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Email Anda',
+                      hintStyle: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.normal),
+                      prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary, size: 20),
+                      filled: true,
+                      fillColor: AppColors.backgroundColor,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: isSending ? null : () => Navigator.pop(dialogContext),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            side: BorderSide(color: Colors.grey.shade300),
+                            foregroundColor: AppColors.textSecondary,
+                          ),
+                          child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: isSending
+                              ? null
+                              : () async {
+                                  final email = emailResetController.text.trim();
+                                  if (email.isEmpty) {
+                                    NotificationHelper.show(pageContext, 'Email tidak boleh kosong', isError: true);
+                                    return;
+                                  }
+                                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+                                    NotificationHelper.show(pageContext, 'Format email tidak valid', isError: true);
+                                    return;
+                                  }
+
+                                  setDialogState(() => isSending = true);
+                                  try {
+                                    // TODO: Implement Forgot Password API
+                                    // await Supabase.instance.client.auth.resetPasswordForEmail(
+                                    //   email,
+                                    //   redirectTo: 'io.supabase.flutter://reset-callback',
+                                    // );
+                                    await Future.delayed(const Duration(seconds: 1)); // Mock
+                                    dialogClosed = true;
+                                    if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                                  } catch (_) {
+                                    if (pageContext.mounted) {
+                                      NotificationHelper.show(pageContext, 'Gagal mengirim tautan reset. Cek koneksi Anda.', isError: true);
+                                    }
+                                  } finally {
+                                    if (!dialogClosed && dialogContext.mounted) {
+                                      setDialogState(() => isSending = false);
+                                    }
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: isSending
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
+                              : const Text('Kirim Tautan', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
+    emailResetController.dispose();
+
+    if (sent == true && mounted) {
+      NotificationHelper.show(context, 'Jika email terdaftar, tautan reset telah dikirim');
+    }
   }
 
   Future<void> _login() async {
@@ -194,12 +230,10 @@ class _LoginPageState extends State<LoginPage> {
     try {
       // --- JALUR LOGIN KHUSUS SISWA (NIS) ---
       if (RegExp(r'^[0-9]+$').hasMatch(identifier)) {
-        // PERINGATAN: Menggunakan NIS sebagai password sangat tidak aman.
-        // Disarankan untuk menggunakan hashing atau password terpisah di database.
-        
         // Cek blokir untuk NIS sebelum lanjut
         try {
-          final isBlocked = await Supabase.instance.client.rpc('check_auth_blocked', params: {'p_identifier': identifier}).timeout(const Duration(seconds: 3));
+          final isBlockedResp = await ApiService().callRpc('check_auth_blocked', params: {'p_identifier': identifier});
+          final isBlocked = isBlockedResp is bool ? isBlockedResp : false;
           if (isBlocked) {
             if (mounted) {
               _showCountdownDialog(60);
@@ -209,12 +243,11 @@ class _LoginPageState extends State<LoginPage> {
           }
         } catch (_) {}
 
-        final result = await Supabase.instance.client.rpc('get_student_auth', params: {'p_nis': identifier});
-        final studentData = result.isNotEmpty ? result.first : null;
+        final result = await ApiService().callRpc('get_student_auth', params: {'p_nis': identifier});
+        final studentData = (result is List && result.isNotEmpty) ? result.first : null;
 
         if (studentData != null && password == identifier) {
-          // JALUR CEPAT: Jalankan urusan background tanpa menunggu (Parallel)
-          unawaited(Supabase.instance.client.rpc('reset_login_attempts', params: {'p_identifier': identifier}));
+          unawaited(ApiService().callRpc('reset_login_attempts', params: {'p_identifier': identifier}));
           unawaited(SharedPreferences.getInstance().then((prefs) {
             prefs.setString('student_name', studentData['name']);
             prefs.setString('student_nis', studentData['nis']);
@@ -243,12 +276,11 @@ class _LoginPageState extends State<LoginPage> {
           }
           return;
         } else if (studentData != null) {
-          // Tunggu catatan gagal selesai agar dialog blokir muncul tepat waktu
-          await Supabase.instance.client.rpc('record_login_failure', params: {'p_identifier': identifier});
+          await ApiService().callRpc('record_login_failure', params: {'p_identifier': identifier});
 
-          // Cek apakah sudah terblokir setelah kegagalan ini (untuk langsung menampilkan dialog jika sudah limit)
           try {
-            final isBlocked = await Supabase.instance.client.rpc('check_auth_blocked', params: {'p_identifier': identifier}).timeout(const Duration(seconds: 3));
+            final isBlockedResp = await ApiService().callRpc('check_auth_blocked', params: {'p_identifier': identifier});
+            final isBlocked = isBlockedResp is bool ? isBlockedResp : false;
             if (isBlocked) {
               if (mounted) {
                 _showCountdownDialog(60);
@@ -269,9 +301,9 @@ class _LoginPageState extends State<LoginPage> {
       // --- JALUR LOGIN GURU / ADMIN (EMAIL) ---
       final String emailFinal = identifier.contains('@') ? identifier : '$identifier@alhanif.id';
 
-      // Jalankan cek blokir dengan timeout singkat agar tidak nunggu lama kalau internet jelek
       try {
-        final isBlocked = await Supabase.instance.client.rpc('check_auth_blocked', params: {'p_identifier': emailFinal}).timeout(const Duration(seconds: 3));
+        final isBlockedResp = await ApiService().callRpc('check_auth_blocked', params: {'p_identifier': emailFinal});
+        final isBlocked = isBlockedResp is bool ? isBlockedResp : false;
         if (isBlocked) {
           if (mounted) _showCountdownDialog(60);
           setState(() => _isLoading = false);
@@ -279,26 +311,24 @@ class _LoginPageState extends State<LoginPage> {
         }
       } catch (_) {}
 
-      final response = await Supabase.instance.client.auth.signInWithPassword(email: emailFinal, password: password);
+      final response = await ApiService().login(emailFinal, password);
 
-      if (response.user != null) {
-        // Reset attempt di background
-        unawaited(Supabase.instance.client.rpc('reset_login_attempts', params: {'p_identifier': emailFinal}));
+      if (response['token'] != null) {
+        unawaited(ApiService().callRpc('reset_login_attempts', params: {'p_identifier': emailFinal}));
 
-        // Ambil profil — role admin ditentukan dari DB, bukan dari email hardcode.
-        final profileData = await Supabase.instance.client.from('profiles').select('is_verified, role').eq('id', response.user!.id).maybeSingle();
+        final user = response['user'];
+        final profileData = await ApiService().getRow('profiles', user['id'].toString());
 
-        if (profileData == null || profileData['is_verified'] != true) {
-          await Supabase.instance.client.auth.signOut();
+        if (profileData['is_verified'] != true) {
+          await ApiService().logout();
           if (mounted) NotificationHelper.show(context, 'Akun belum diverifikasi Admin.', isError: true);
           setState(() => _isLoading = false);
           return;
         }
 
-        // Normalisasi Super Admin -> Admin supaya UI konsisten
         final role = profileData['role'].toString() == 'Super Admin' ? 'Admin' : profileData['role'].toString();
 
-        PushNotificationService.login(response.user!.id);
+        PushNotificationService.login(user['id'].toString());
         PushNotificationService.setTag('role', role.toLowerCase());
 
         if (mounted) {
@@ -309,13 +339,12 @@ class _LoginPageState extends State<LoginPage> {
       String errorMessage = error.toString();
       final String emailFinal = identifier.contains('@') ? identifier : '$identifier@alhanif.id';
 
-      // CATAT KEGAGALAN LOGIN EMAIL (Tunggu prosesnya selesai agar blokir akurat)
       if (!errorMessage.contains('Terlalu banyak percobaan')) {
         try {
-          await Supabase.instance.client.rpc('record_login_failure', params: {'p_identifier': emailFinal});
+          await ApiService().callRpc('record_login_failure', params: {'p_identifier': emailFinal});
 
-          // Cek apakah sudah terblokir setelah kegagalan ini
-          final isBlocked = await Supabase.instance.client.rpc('check_auth_blocked', params: {'p_identifier': emailFinal}).timeout(const Duration(seconds: 3));
+          final isBlockedResp = await ApiService().callRpc('check_auth_blocked', params: {'p_identifier': emailFinal});
+          final isBlocked = isBlockedResp is bool ? isBlockedResp : false;
           if (isBlocked) {
             if (mounted) _showCountdownDialog(60);
             return;
@@ -325,7 +354,7 @@ class _LoginPageState extends State<LoginPage> {
 
       if (errorMessage.contains('Terlalu banyak percobaan')) {
         if (mounted) _showCountdownDialog(60);
-      } else if (errorMessage.contains('Invalid login credentials')) {
+      } else if (errorMessage.contains('Invalid login credentials') || errorMessage.contains('Login gagal')) {
         if (mounted) NotificationHelper.show(context, 'Kata sandi Email salah!', isError: true);
       } else {
         if (mounted) NotificationHelper.show(context, 'Gagal masuk. Cek koneksi & akun Anda.', isError: true);

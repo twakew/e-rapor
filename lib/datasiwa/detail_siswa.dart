@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -39,7 +39,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
   final Color textMuted = AppColors.textMuted;
-  final Color borderColor = const Color(0xFFE2E8F0);
+  final Color borderColor = AppColors.borderColor;
 
   late dynamic _student;
   final ScreenshotController _screenshotController = ScreenshotController();
@@ -69,23 +69,19 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
     if (_student == null && widget.studentNis == null) return;
     
     try {
-      final supabase = Supabase.instance.client;
+      final apiService = ApiService();
       final studentId = _student?['id'];
 
       if (widget.userRole == 'Admin' || widget.userRole == 'Guru' || widget.userRole == 'Super Admin') {
         if (studentId != null) {
-          final response = await supabase
-              .from('students')
-              .select()
-              .eq('id', studentId)
-              .single();
+          final response = await apiService.getRow('students', studentId.toString());
           setState(() {
             _student = response;
           });
           _fetchAttendance(studentId);
         }
       } else if (widget.studentNis != null) {
-        final response = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis});
+        final response = await apiService.callRpc('get_my_profile', params: {'p_nis': widget.studentNis});
         if (response != null && (response as List).isNotEmpty) {
           setState(() {
             _student = response.first;
@@ -103,10 +99,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
   Future<void> _fetchAttendance(dynamic studentId) async {
     setState(() => _loadingAttendance = true);
     try {
-      final response = await Supabase.instance.client
-          .from('attendance')
-          .select('status')
-          .eq('student_id', studentId);
+      final response = await ApiService().getTable('attendance', queryParameters: {'student_id': studentId.toString()});
 
       int h = 0, i = 0, s = 0;
       for (var row in response) {
@@ -233,7 +226,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: AppColors.cardShadow,
         ),
         child: Column(
           children: [
@@ -336,7 +329,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: AppColors.cardShadow,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -593,8 +586,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
 
     if (confirmed == true) {
       try {
-        final supabase = Supabase.instance.client;
-        await supabase.from('students').delete().eq('id', _student['id']);
+        await ApiService().delete('students', _student['id'].toString());
         
         if (!mounted) return;
         NotificationHelper.show(context, 'Data siswa berhasil dihapus');

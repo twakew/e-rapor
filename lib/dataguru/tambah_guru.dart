@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
 import '../utils/push_notification_service.dart';
@@ -18,7 +18,7 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
   final _formKey = GlobalKey<FormState>();
   int _activeStep = 0;
   bool _isLoading = false;
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
 
   // --- Controllers Data Pribadi (Step 1) ---
   final _nipCtrl = TextEditingController();
@@ -65,7 +65,7 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
   final Color textMuted = AppColors.textMuted;
-  final Color borderColor = const Color(0xFFE2E8F0);
+  final Color borderColor = AppColors.borderColor;
   final Color errorRed = const Color(0xFFEF4444);
 
   @override
@@ -105,8 +105,8 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
   Future<void> _fetchClassBatch() async {
     try {
       // 1. Fetch all unique classes, batches, and rombels from students
-      final students = await supabase.from('students').select('class, batch, rombel');
-      _masterClasses = (students as List)
+      final students = await apiService.getTable('students');
+      _masterClasses = students
           .map((s) => s['class']?.toString() ?? '')
           .where((c) => c.isNotEmpty)
           .toSet()
@@ -123,8 +123,8 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
           .toList()..sort();
 
       // 2. Fetch all currently assigned wali_kelas combinations from teachers table
-      final teachersData = await supabase.from('teachers').select('wali_kelas, angkatan_wali, rombel_wali');
-      _occupiedPairs = (teachersData as List)
+      final teachersData = await apiService.getTable('teachers');
+      _occupiedPairs = teachersData
           .where((t) => t['wali_kelas'] != null && t['angkatan_wali'] != null && t['rombel_wali'] != null)
           .map((t) => "${t['wali_kelas']}|${t['rombel_wali']}|${t['angkatan_wali']}")
           .toSet();
@@ -248,7 +248,7 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
     if (confirmed == true) {
       setState(() => _isLoading = true);
       try {
-        await supabase.from('teachers').delete().eq('id', widget.teacher!['id']);
+        await apiService.delete('teachers', widget.teacher!['id'].toString());
         if (mounted) {
           NotificationHelper.show(context, 'Data guru berhasil dihapus');
           if (widget.onBack != null) {
@@ -298,10 +298,10 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
       };
 
       if (widget.teacher != null) {
-        await supabase.from('teachers').update(data).eq('id', widget.teacher!['id']);
+        await apiService.update('teachers', widget.teacher!['id'].toString(), data);
         if (mounted) NotificationHelper.show(context, 'Berhasil memperbarui data guru');
       } else {
-        await supabase.from('teachers').insert(data);
+        await apiService.insert('teachers', data);
         if (mounted) NotificationHelper.show(context, 'Berhasil menambah data guru: ${_nameCtrl.text}');
         
         try {

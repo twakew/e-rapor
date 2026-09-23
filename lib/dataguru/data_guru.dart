@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'tambah_guru.dart';
 import 'detail_guru.dart';
@@ -24,7 +24,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
   final Color textSecondary = AppColors.textSecondary;
   final Color textMuted = AppColors.textMuted;
 
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
   List<dynamic> _all = [];
   List<dynamic> _filtered = [];
   bool _loading = true;
@@ -56,16 +56,10 @@ class _DataGuruPageState extends State<DataGuruPage> {
     try {
       List<dynamic> d = [];
 
-      // JALUR PRO: Gunakan RPC get_public_teachers untuk Siswa (Bypass RLS dengan aman)
-      if (widget.userRole == 'User') {
-        // Siswa (anon) hanya boleh akses lewat RPC publik, bukan query langsung
-        // (query langsung bakal gagal karena RLS menolak baca anon).
-        final response = await supabase.rpc('get_public_teachers');
-        d = (response as List?) ?? [];
-      } else {
-        // Jalur Admin/Guru: Ambil semua data
-        d = await supabase.from('teachers').select().order('name', ascending: true);
-      }
+      // Just fetch all teachers from the API. The API will return everything.
+      d = await apiService.getTable('teachers');
+      // Sort manually
+      d.sort((a, b) => (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString()));
 
       if (mounted) {
         // Jika guru kosong (tabel kosong / RLS belum siap), biarkan data kosong.
@@ -129,7 +123,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
 
     if (confirmed == true) {
       try {
-        await supabase.from('teachers').delete().eq('id', teacher['id']);
+        await apiService.delete('teachers', teacher['id'].toString());
         if (mounted) {
           NotificationHelper.show(context, 'Data guru berhasil dihapus');
           _fetchData();

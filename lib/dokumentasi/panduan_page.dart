@@ -12,13 +12,13 @@ class PanduanPage extends StatefulWidget {
 
 class _PanduanPageState extends State<PanduanPage> {
   // Clean Palette (Consistent with the project)
-  final Color primaryGreen = const Color(0xFF0D9488);
-  final Color primaryBlue = const Color(0xFF1D4ED8);
-  final Color darkNavy = const Color(0xFF1E1B4B);
-  final Color textSecondary = const Color(0xFF64748B);
-  final Color textMuted = const Color(0xFF94A3B8);
+  final Color primaryGreen = AppColors.primary;
+  final Color primaryBlue = AppColors.infoBlue;
+  final Color darkNavy = AppColors.textDark;
+  final Color textSecondary = AppColors.textSecondary;
+  final Color textMuted = AppColors.textMuted;
   final Color bgLight = AppColors.backgroundColor;
-  final Color borderColor = const Color(0xFFE2E8F0);
+  final Color borderColor = AppColors.borderColor;
 
   final List<Map<String, dynamic>> _panduanList = [
     {
@@ -165,7 +165,7 @@ class _PanduanPageState extends State<PanduanPage> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: borderColor),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 15, offset: const Offset(0, 5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 5)),
         ],
       ),
       child: Column(

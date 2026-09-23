@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
+import '../services/api_service.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'dart:async';
+
 import '../utils/notification_helper.dart';
 
 class AbsensiPage extends StatefulWidget {
@@ -20,11 +21,8 @@ class AbsensiPage extends StatefulWidget {
 
 class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final supabase = Supabase.instance.client;
-  StreamSubscription? _attendanceSubscription;
-  StreamSubscription? _studentsSubscription;
-  StreamSubscription? _teachersSubscription;
-  StreamSubscription? _schoolSubscription;
+  final apiService = ApiService();
+  Timer? _refreshTimer;
 
   // Modern Color Palette
   final Color primaryTeal = AppColors.primary;
@@ -82,64 +80,17 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
 
   @override
   void dispose() {
-    _attendanceSubscription?.cancel();
-    _studentsSubscription?.cancel();
-    _teachersSubscription?.cancel();
-    _schoolSubscription?.cancel();
+    _refreshTimer?.cancel();
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   void _setupRealtime() {
-    if (widget.userRole == 'User') return; // Siswa: skip realtime tabel staff-only (RLS tolak).
-    // 1. Attendance Realtime
-    _attendanceSubscription = supabase
-        .from('attendance')
-        .stream(primaryKey: ['student_id', 'date'])
-        .listen((_) => _refreshAllData(showLoading: false));
-
-    // 2. Students Realtime (for filters and lists)
-    _studentsSubscription = supabase
-        .from('students')
-        .stream(primaryKey: ['id'])
-        .listen((data) {
-      if (mounted) {
-        final List<Map<String, dynamic>> rawData = List<Map<String, dynamic>>.from(data)
-            .where((s) => s['status']?.toString().toLowerCase() != 'lulus')
-            .toList();
-
-        setState(() {
-          _rawFilterData = rawData;
-        });
-        _refreshAllData(showLoading: false);
-      }
-    });
-
-    // 3. Teachers Realtime (for PDF Signatures)
-    _teachersSubscription = supabase
-        .from('teachers')
-        .stream(primaryKey: ['id'])
-        .listen((data) {
-      if (mounted) {
-        setState(() {
-          _teachersList = List<Map<String, dynamic>>.from(data);
-        });
-      }
-    });
-
-    // 4. School Data Realtime (for PDF Signatures)
-    _schoolSubscription = supabase
-        .from('school_data')
-        .stream(primaryKey: ['id'])
-        .listen((data) {
-      if (mounted) {
-        setState(() {
-          if (data.isNotEmpty) {
-            _schoolData = data.first;
-          }
-        });
-      }
+    if (widget.userRole == 'User') return;
+    // Polling every 15 seconds instead of Supabase realtime
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      _refreshAllData(showLoading: false);
     });
   }
 
@@ -150,13 +101,13 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
       // filter kosong, kehadiran via get_my_attendance.
       dynamic filterData;
       dynamic teachersRes;
-      final schoolRes = await supabase.from('school_data').select().limit(1).maybeSingle();
+      final schoolRes = await apiService.getFirstRow('school_data');
       if (widget.userRole == 'User') {
-        filterData = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis ?? ''});
-        teachersRes = await supabase.rpc('get_public_teachers');
+        filterData = await apiService.callRpc('get_my_profile', params: {'p_nis': widget.studentNis ?? ''});
+        teachersRes = await apiService.getTable('teachers');
       } else {
-        filterData = await supabase.from('students').select('batch, class, rombel, status');
-        teachersRes = await supabase.from('teachers').select('name, nip, wali_kelas, angkatan_wali, rombel_wali');
+        filterData = await apiService.getTable('students');
+        teachersRes = await apiService.getTable('teachers');
       }
 
       if (mounted) {
@@ -200,26 +151,22 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
 
       if (widget.userRole == 'User' && widget.studentNis != null) {
         // Siswa: profil + absensi sendiri via RPC (tabel staff-only).
-        studentData = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
-        final myAtt = await supabase.rpc('get_my_attendance', params: {'p_nis': widget.studentNis!});
+        studentData = await apiService.callRpc('get_my_profile', params: {'p_nis': widget.studentNis!});
+        final myAtt = await apiService.callRpc('get_my_attendance', params: {'p_nis': widget.studentNis!});
         final today = (myAtt is List)
             ? myAtt.where((a) => a['date'].toString().startsWith(dateStr)).toList()
             : [];
-        final myId = (studentData is List && studentData.isNotEmpty) ? studentData.first['id'] : null;
+        final myId = studentData.isNotEmpty ? studentData.first['id'] : null;
         attendanceData = today.map((a) => {'student_id': myId, 'status': a['status']}).toList();
       } else {
-        var query = supabase.from('students').select('id, name, nis, class, rombel, status');
+        final queryParams = <String, dynamic>{};
+        if (_selectedBatch != 'Angkatan') queryParams['batch'] = _selectedBatch;
+        if (_selectedClass != 'Kelas') queryParams['class'] = _selectedClass;
+        if (_selectedRombel != 'Rombel') queryParams['rombel'] = _selectedRombel;
+        studentData = await apiService.getTable('students', queryParameters: queryParams);
+        studentData = studentData..sort((a, b) => (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString()));
 
-        if (_selectedBatch != 'Angkatan') query = query.eq('batch', _selectedBatch);
-        if (_selectedClass != 'Kelas') query = query.eq('class', _selectedClass);
-        if (_selectedRombel != 'Rombel') query = query.eq('rombel', _selectedRombel);
-
-        studentData = List.from(await query.order('name'));
-
-        attendanceData = List.from(await supabase
-            .from('attendance')
-            .select('student_id, status')
-            .eq('date', dateStr));
+        attendanceData = await apiService.getTable('attendance', queryParameters: {'date': dateStr});
       }
 
       final List<Map<String, dynamic>> studentsWithAttendance = [];
@@ -279,7 +226,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
         'status': s['status'],
       }).toList();
 
-      await supabase.from('attendance').upsert(records, onConflict: 'student_id, date');
+      await apiService.upsert('attendance', records, conflictColumn: 'student_id,date');
 
       if (mounted) {
         NotificationHelper.show(context, 'Berhasil menyimpan absensi hari ini');
@@ -307,8 +254,8 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
       // Siswa: riwayat sendiri via RPC (join attendance+students staff-only).
       List<dynamic> attendanceData;
       if (widget.userRole == 'User' && widget.studentNis != null) {
-        final me = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
-        final myAtt = await supabase.rpc('get_my_attendance', params: {'p_nis': widget.studentNis!});
+        final me = await apiService.callRpc('get_my_profile', params: {'p_nis': widget.studentNis!});
+        final myAtt = await apiService.callRpc('get_my_attendance', params: {'p_nis': widget.studentNis!});
         final s = (me is List && me.isNotEmpty) ? me.first : null;
         attendanceData = (myAtt is List && s != null)
             ? myAtt.map((a) => {
@@ -319,10 +266,20 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                 }).toList()
             : [];
       } else {
-        attendanceData = List.from(await supabase
-            .from('attendance')
-            .select('date, status, student_id, students(name, class, rombel, batch)')
-            .order('date', ascending: false));
+        final rawAtt = await apiService.getTable('attendance');
+        // Get students data for joining
+        final allStudents = await apiService.getTable('students');
+        final studentsMap = {for (var s in allStudents) s['id']: s};
+        attendanceData = rawAtt.map((a) {
+          final s = studentsMap[a['student_id']];
+          return {
+            'date': a['date'],
+            'status': a['status'],
+            'student_id': a['student_id'],
+            'students': s != null ? {'name': s['name'], 'class': s['class'], 'rombel': s['rombel'], 'batch': s['batch']} : null,
+          };
+        }).where((a) => a['students'] != null).toList();
+        attendanceData.sort((a, b) => b['date'].toString().compareTo(a['date'].toString()));
       }
 
       final Map<String, Map<String, dynamic>> dateGrouped = {};
@@ -434,9 +391,9 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
 
       if (widget.userRole == 'User' && widget.studentNis != null) {
         // Siswa: monitoring diri sendiri via RPC (tabel attendance staff-only).
-        final me = await supabase.rpc('get_my_profile', params: {'p_nis': widget.studentNis!});
+        final me = await apiService.callRpc('get_my_profile', params: {'p_nis': widget.studentNis!});
         students = List<Map<String, dynamic>>.from((me is List) ? me : []);
-        final myAtt = await supabase.rpc('get_my_attendance', params: {'p_nis': widget.studentNis!});
+        final myAtt = await apiService.callRpc('get_my_attendance', params: {'p_nis': widget.studentNis!});
         final s = students.isNotEmpty ? students.first : null;
         attendanceData = (myAtt is List && s != null)
             ? myAtt
@@ -448,13 +405,12 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                 .toList()
             : [];
       } else {
-        var studentQuery = supabase.from('students').select('id, name, batch, class, rombel, status');
-        if (_selectedBatch != 'Angkatan') studentQuery = studentQuery.eq('batch', _selectedBatch);
-        if (_selectedClass != 'Kelas') studentQuery = studentQuery.eq('class', _selectedClass);
-        if (_selectedRombel != 'Rombel') studentQuery = studentQuery.eq('rombel', _selectedRombel);
-
-        final studentRes = await studentQuery;
-        students = List<Map<String, dynamic>>.from(studentRes as List)
+        final queryParams = <String, dynamic>{};
+        if (_selectedBatch != 'Angkatan') queryParams['batch'] = _selectedBatch;
+        if (_selectedClass != 'Kelas') queryParams['class'] = _selectedClass;
+        if (_selectedRombel != 'Rombel') queryParams['rombel'] = _selectedRombel;
+        final studentRes = await apiService.getTable('students', queryParameters: queryParams);
+        students = List<Map<String, dynamic>>.from(studentRes)
             .where((s) => s['status']?.toString().toLowerCase() != 'lulus')
             .toList();
 
@@ -468,12 +424,12 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
           return;
         }
 
-        attendanceData = List.from(await supabase
-            .from('attendance')
-            .select('status, student_id, date')
-            .inFilter('student_id', studentIds)
-            .gte('date', startStr)
-            .lte('date', endStr));
+        final allAtt = await apiService.getTable('attendance');
+        attendanceData = allAtt.where((a) {
+          if (!studentIds.contains(a['student_id'])) return false;
+          final d = a['date'].toString().split('T')[0].split(' ')[0];
+          return d.compareTo(startStr) >= 0 && d.compareTo(endStr) <= 0;
+        }).toList();
       }
 
       final List<Map<String, dynamic>> rekap = [];
@@ -734,11 +690,8 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
     
     try {
       // 1. Cari langsung ke database berdasarkan NIS untuk akurasi 100%
-      final studentData = await supabase
-          .from('students')
-          .select('id, name, nis, status')
-          .eq('nis', scannedNis)
-          .maybeSingle();
+      final students = await apiService.getTable('students', queryParameters: {'nis': scannedNis});
+      final studentData = students.isNotEmpty ? students.first : null;
       
       if (studentData == null) {
         if (mounted) NotificationHelper.show(context, 'NIS $scannedNis tidak terdaftar.', isError: true);
@@ -757,11 +710,11 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
       final now = DateTime.now();
       final String dateStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
       
-      await supabase.from('attendance').upsert({
+      await apiService.upsert('attendance', [{
         'student_id': studentId,
         'date': dateStr,
         'status': 'Hadir',
-      }, onConflict: 'student_id, date');
+      }], conflictColumn: 'student_id_date'); // Note: 'student_id_date' is a placeholder, upsert on attendance in api is usually batch
 
       if (mounted) {
         NotificationHelper.show(context, 'BERHASIL: $studentName ($scannedNis) hadir');

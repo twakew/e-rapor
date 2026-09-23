@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:laporsekolaherapor/services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import 'package:intl/intl.dart';
 
@@ -28,7 +30,7 @@ class ProfilPage extends StatefulWidget {
 }
 
 class _ProfilPageState extends State<ProfilPage> {
-  final supabase = Supabase.instance.client;
+  final apiService = ApiService();
   bool _isLoading = true;
   dynamic _userData;
   Map<String, dynamic>? _schoolData;
@@ -63,31 +65,36 @@ class _ProfilPageState extends State<ProfilPage> {
   // ═══════════════════════════════════════════════════════════════════
   Future<void> _fetchProfileData() async {
     setState(() => _isLoading = true);
-    final user = supabase.auth.currentUser;
+    final prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('jwt_token') ?? '';
+    Map<String, dynamic>? decodedToken;
+    if (token.isNotEmpty) {
+      decodedToken = JwtDecoder.decode(token);
+    }
     
     // Jalankan fetch profile dan school data secara paralel
     await Future.wait([
-      _getProfileInfo(user),
+      _getProfileInfo(decodedToken),
       _getSchoolInfo(),
     ]);
 
     if (mounted) setState(() => _isLoading = false);
   }
 
-  Future<void> _getProfileInfo(User? user) async {
+  Future<void> _getProfileInfo(Map<String, dynamic>? userToken) async {
     try {
-      if (_role == null && user != null) {
-        final profileRes = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-        _role = profileRes?['role'] ?? 'User';
+      if (_role == null && userToken != null) {
+        final profileRes = await apiService.getRow('profiles', userToken['id']);
+        _role = profileRes['role'] ?? 'User';
       }
 
-      if (user != null && (_role == 'Admin' || _role == 'Guru')) {
-        final data = await supabase.from('profiles').select().eq('id', user.id).maybeSingle();
-        if (data != null) {
+      if (userToken != null && (_role == 'Admin' || _role == 'Guru')) {
+        final data = await apiService.getRow('profiles', userToken['id']);
+        if (data.isNotEmpty) {
           _userData = {
             ...data,
             'name': data['full_name'] ?? (_role == 'Admin' ? 'Admin' : 'Guru'),
-            'email': data['email'] ?? user.email,
+            'email': data['email'] ?? userToken['email'],
             'phone': data['phone'] ?? '-',
             'address': data['address'] ?? '-',
             'username': data['username'] ?? data['email']?.split('@')[0] ?? '-',
@@ -95,17 +102,15 @@ class _ProfilPageState extends State<ProfilPage> {
             'joined': data['created_at'] != null 
                 ? DateFormat('d MMMM yyyy', 'id_ID').format(DateTime.parse(data['created_at']))
                 : '-',
-            'last_login': user.lastSignInAt != null
-                ? '${DateFormat('d MMMM yyyy, HH:mm', 'id_ID').format(DateTime.parse(user.lastSignInAt!).toLocal())} WIB'
-                : '-'
+            'last_login': '-'
           };
         }
       } else {
         String? nis = widget.studentNis;
         if (nis != null) {
           // Siswa tanpa sesi: direct select students ditolak RLS (staff-only).
-          final rows = await supabase.rpc('get_my_profile', params: {'p_nis': nis});
-          final data = (rows is List && rows.isNotEmpty) ? rows.first : null;
+          final rows = await apiService.callRpc('get_my_profile', params: {'p_nis': nis});
+          final data = (rows is List && rows.isNotEmpty) ? rows.first : (rows is Map ? rows : null);
           if (data != null) {
             _userData = {
               ...data,
@@ -130,7 +135,8 @@ class _ProfilPageState extends State<ProfilPage> {
 
   Future<void> _getSchoolInfo() async {
     try {
-      final data = await supabase.from('school_data').select().limit(1).maybeSingle();
+      final List<dynamic> dataList = await apiService.getTable('school_data');
+      final data = dataList.isNotEmpty ? dataList.first : null;
       if (mounted && data != null) {
         setState(() {
           _schoolData = data;
