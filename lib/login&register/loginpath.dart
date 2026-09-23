@@ -61,15 +61,13 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _forgotPassword() async {
-    final emailResetController = TextEditingController();
+    // Tidak ada alur reset-email di backend (endpoint reset tanpa verifikasi
+    // pernah dihapus karena celah keamanan takeover akun). Arahkan ke admin.
     final pageContext = context;
 
     final sent = await showDialog<bool>(
       context: pageContext,
       builder: (dialogContext) {
-        var isSending = false;
-        var dialogClosed = false;
-
         return StatefulBuilder(
           builder: (_, setDialogState) => Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -104,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Masukkan alamat email Anda. Kami akan mengirimkan tautan untuk mengatur ulang kata sandi.',
+                    'Untuk keamanan akun, kata sandi hanya dapat diatur ulang oleh admin sekolah. Silakan hubungi admin sekolah untuk mereset kata sandi Anda.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
@@ -112,34 +110,12 @@ class _LoginPageState extends State<LoginPage> {
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: emailResetController,
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                    decoration: InputDecoration(
-                      hintText: 'Email Anda',
-                      hintStyle: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.normal),
-                      prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary, size: 20),
-                      filled: true,
-                      fillColor: AppColors.backgroundColor,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 24),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: isSending ? null : () => Navigator.pop(dialogContext),
+                          onPressed: () => Navigator.pop(dialogContext),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -152,39 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: isSending
-                              ? null
-                              : () async {
-                                  final email = emailResetController.text.trim();
-                                  if (email.isEmpty) {
-                                    NotificationHelper.show(pageContext, 'Email tidak boleh kosong', isError: true);
-                                    return;
-                                  }
-                                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-                                    NotificationHelper.show(pageContext, 'Format email tidak valid', isError: true);
-                                    return;
-                                  }
-
-                                  setDialogState(() => isSending = true);
-                                  try {
-                                    // TODO: Implement Forgot Password API
-                                    // await Supabase.instance.client.auth.resetPasswordForEmail(
-                                    //   email,
-                                    //   redirectTo: 'io.supabase.flutter://reset-callback',
-                                    // );
-                                    await Future.delayed(const Duration(seconds: 1)); // Mock
-                                    dialogClosed = true;
-                                    if (dialogContext.mounted) Navigator.pop(dialogContext, true);
-                                  } catch (_) {
-                                    if (pageContext.mounted) {
-                                      NotificationHelper.show(pageContext, 'Gagal mengirim tautan reset. Cek koneksi Anda.', isError: true);
-                                    }
-                                  } finally {
-                                    if (!dialogClosed && dialogContext.mounted) {
-                                      setDialogState(() => isSending = false);
-                                    }
-                                  }
-                                },
+                          onPressed: () => Navigator.pop(dialogContext, true),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             backgroundColor: AppColors.primary,
@@ -192,13 +136,7 @@ class _LoginPageState extends State<LoginPage> {
                             elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: isSending
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                )
-                              : const Text('Kirim Tautan', style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: const Text('Mengerti', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -210,10 +148,8 @@ class _LoginPageState extends State<LoginPage> {
         );
       },
     );
-    emailResetController.dispose();
-
     if (sent == true && mounted) {
-      NotificationHelper.show(context, 'Jika email terdaftar, tautan reset telah dikirim');
+      NotificationHelper.show(context, 'Silakan hubungi admin sekolah untuk reset kata sandi');
     }
   }
 
@@ -353,8 +289,14 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       if (errorMessage.contains('Terlalu banyak percobaan')) {
-        if (mounted) _showCountdownDialog(60);
-      } else if (errorMessage.contains('Invalid login credentials') || errorMessage.contains('Login gagal')) {
+        if (mounted) _showCountdownDialog(900); // jendela rate limit backend: 15 menit
+      } else if (errorMessage.contains('belum diverifikasi')) {
+        if (mounted) NotificationHelper.show(context, 'Akun belum diverifikasi Admin.', isError: true);
+      } else if (errorMessage.contains('minimal 8 karakter')) {
+        if (mounted) NotificationHelper.show(context, 'Password minimal 8 karakter.', isError: true);
+      } else if (errorMessage.contains('Invalid email or password') ||
+          errorMessage.contains('Invalid login credentials') ||
+          errorMessage.contains('Login gagal')) {
         if (mounted) NotificationHelper.show(context, 'Kata sandi Email salah!', isError: true);
       } else {
         if (mounted) NotificationHelper.show(context, 'Gagal masuk. Cek koneksi & akun Anda.', isError: true);

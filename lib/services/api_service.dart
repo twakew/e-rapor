@@ -67,19 +67,33 @@ class ApiService {
   }
 
   // --- AUTH ---
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await _dio.post(
-      '/auth/login',
-      data: {'email': email, 'password': password},
-    );
+  /// Ambil pesan `error` dari response backend; kalau tidak ada, pakai fallback.
+  /// Tanpa ini pesan server (belum diverifikasi, rate limit, dst.) hilang
+  /// di balik DioException dan user melihat pesan generik yang salah.
+  static String _serverError(DioException e, {required String fallback}) {
+    final data = e.response?.data;
+    if (data is Map && data['error'] is String) return data['error'] as String;
+    if (e.response == null) return 'Koneksi gagal. Cek jaringan Anda.';
+    return fallback;
+  }
 
-    if (response.statusCode == 200) {
-      _token = response.data['token'];
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('jwt_token', _token!);
-      return response.data;
-    } else {
-      throw Exception('Login gagal');
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    try {
+      final response = await _dio.post(
+        '/auth/login',
+        data: {'email': email, 'password': password},
+      );
+
+      if (response.statusCode == 200) {
+        _token = response.data['token'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwt_token', _token!);
+        return response.data;
+      } else {
+        throw Exception('Login gagal');
+      }
+    } on DioException catch (e) {
+      throw Exception(_serverError(e, fallback: 'Login gagal'));
     }
   }
 
@@ -94,15 +108,23 @@ class ApiService {
     String password,
     String fullName,
   ) async {
-    final response = await _dio.post(
-      '/auth/register',
-      data: {'email': email, 'password': password, 'full_name': fullName},
-    );
-    return response.data;
+    try {
+      final response = await _dio.post(
+        '/auth/register',
+        data: {'email': email, 'password': password, 'full_name': fullName},
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw Exception(_serverError(e, fallback: 'Register gagal'));
+    }
   }
 
   Future<void> updatePassword(String newPassword) async {
-    await _dio.post('/auth/update-password', data: {'password': newPassword});
+    try {
+      await _dio.post('/auth/update-password', data: {'password': newPassword});
+    } on DioException catch (e) {
+      throw Exception(_serverError(e, fallback: 'Gagal memperbarui kata sandi'));
+    }
   }
 
   bool get isLoggedIn => _token != null;
