@@ -143,7 +143,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 colors: [
                   Color(0xFF1E1B4B), // Deep Indigo 950
                   Color(0xFF312E81), // Indigo 900
-                  AppColors.primary, // Indigo 600 (#4F46E5)
+                  AppColors.primary, // Charcoal (aksen indigo: AppColors.brand)
                 ],
               ),
             ),

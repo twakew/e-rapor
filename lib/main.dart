@@ -53,7 +53,7 @@ class _MyAppState extends State<MyApp> {
         // Selaras dengan AppColors (warm monochrome) — jangan dari seed indigo,
         // dulu semua widget Material bawaan berwarna ungu di tengah UI abu-abu.
         colorScheme: const ColorScheme.light(
-          primary: AppColors.primary,
+          primary: AppColors.brand,
           onPrimary: Colors.white,
           secondary: AppColors.secondary,
           onSecondary: Colors.white,
@@ -78,7 +78,7 @@ class _MyAppState extends State<MyApp> {
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
+            backgroundColor: AppColors.brand,
             foregroundColor: Colors.white,
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -102,7 +102,7 @@ class _MyAppState extends State<MyApp> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
+            borderSide: const BorderSide(color: AppColors.brand, width: 1.8),
           ),
         ),
         dialogTheme: DialogThemeData(

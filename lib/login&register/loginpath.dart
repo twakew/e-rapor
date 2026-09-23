@@ -350,8 +350,8 @@ class _LoginPageState extends State<LoginPage> {
               gradient: LinearGradient(
                 colors: [
                   Color(0xFF312E81), // Deep Indigo 900
-                  AppColors.primary,
-                  AppColors.secondary,
+                  AppColors.brand,
+                  AppColors.brandDark,
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -993,8 +993,8 @@ class _LoginPageState extends State<LoginPage> {
               borderRadius: BorderRadius.circular(16),
               gradient: const LinearGradient(
                 colors: [
-                  AppColors.primary,
-                  AppColors.secondary,
+                  AppColors.brand,
+                  AppColors.brandDark,
                 ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,

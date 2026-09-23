@@ -6,6 +6,10 @@ class AppColors {
   static const Color secondary = Color(0xFF2F3437); // Dark Gray
   static const Color accent = Color(0xFFF7F6F3); // Warm Bone
 
+  // --- Brand Accent (CTA, fokus, highlight) — indigo, warna seed asli project ---
+  static const Color brand = Color(0xFF4F46E5); // Indigo 600
+  static const Color brandDark = Color(0xFF4338CA); // Indigo 700
+
   // --- Backgrounds ---
   static const Color backgroundColor = Color(0xFFFBFBFA); // Warm White
   static const Color cardWhite = Color(0xFFFFFFFF); // Pure White

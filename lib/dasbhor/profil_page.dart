@@ -229,7 +229,7 @@ class _ProfilPageState extends State<ProfilPage> {
                   gradient: LinearGradient(
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
-                    colors: [AppColors.primary, AppColors.secondary, AppColors.primary.withValues(alpha: 0.8)],
+                    colors: [AppColors.brand, AppColors.brandDark, AppColors.brand.withValues(alpha: 0.8)],
                   ),
                 ),
                 child: Stack(
@@ -252,7 +252,7 @@ class _ProfilPageState extends State<ProfilPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [AppColors.primary, AppColors.secondary],
+                        colors: [AppColors.brand, AppColors.brandDark],
                       ),
                     ),
                     child: Center(
