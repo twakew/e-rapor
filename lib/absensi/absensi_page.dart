@@ -25,7 +25,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   Timer? _refreshTimer;
 
   // Modern Color Palette
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color bgColor = AppColors.backgroundColor;
   final Color colorHadir = const Color(0xFF10B981);
   final Color colorIzin = const Color(0xFFF59E0B);
@@ -987,7 +987,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.history_rounded, size: 64, color: Colors.grey[200]),
+            Icon(Icons.history_rounded, size: 64, color: AppColors.textMuted),
             const SizedBox(height: 16),
             Text("Belum ada riwayat", style: TextStyle(color: textMuted, fontWeight: FontWeight.bold)),
           ],
@@ -1142,7 +1142,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                                             style: TextStyle(
                                               fontWeight: FontWeight.w700,
                                               fontSize: 13,
-                                              color: s['status'] == 'Hadir' ? const Color(0xFF334155) : statusColor,
+                                              color: s['status'] == 'Hadir' ? AppColors.textSecondary : statusColor,
                                             ),
                                           ),
                                         ),
@@ -1180,7 +1180,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
 
   Widget _buildMonitoringTab() {
     if (_isFetchingMonitoring) return const Center(child: CircularProgressIndicator());
-    if (_monitoringData.isEmpty) return Center(child: Text("Tidak ada data", style: TextStyle(color: Colors.grey[400])));
+    if (_monitoringData.isEmpty) return Center(child: Text("Tidak ada data", style: TextStyle(color: AppColors.textSecondary)));
 
     final daysInMonth = DateTime(_monitoringYear, _monitoringMonth + 1, 0).day;
     
@@ -1268,7 +1268,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                             label: Container(
                               alignment: Alignment.center,
                               width: 22,
-                              child: Text('$day', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSunday ? Colors.red : const Color(0xFF64748B)))
+                              child: Text('$day', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSunday ? Colors.red : AppColors.textSecondary))
                             )
                           );
                         }),
@@ -1304,7 +1304,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                       }).toList(),
                     ),
                   ),
-                  const Divider(height: 40, thickness: 1, color: Color(0xFFF1F5F9)),
+                  Divider(height: 40, thickness: 1, color: AppColors.borderColor),
                 ],
               );
             },
@@ -1365,13 +1365,13 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   }
 
   Widget _statusSymbol(String? status, {bool isSunday = false}) {
-    if (status == null) return Text(isSunday ? '' : '-', style: TextStyle(color: Colors.grey.withValues(alpha: 0.5), fontSize: 10));
+    if (status == null) return Text(isSunday ? '' : '-', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.8), fontSize: 10));
     switch (status) {
       case 'Hadir': return Icon(Icons.check_circle_rounded, color: colorHadir, size: 16);
       case 'Izin': return Text('I', style: TextStyle(color: colorIzin, fontWeight: FontWeight.bold, fontSize: 12));
       case 'Sakit': return Text('S', style: TextStyle(color: colorSakit, fontWeight: FontWeight.bold, fontSize: 12));
       case 'Alfa': return Text('A', style: TextStyle(color: colorAlfa, fontWeight: FontWeight.bold, fontSize: 12));
-      default: return Text(isSunday ? '' : '-', style: TextStyle(color: Colors.grey.withValues(alpha: 0.5), fontSize: 10));
+      default: return Text(isSunday ? '' : '-', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.8), fontSize: 10));
     }
   }
 
@@ -1388,7 +1388,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
               decoration: BoxDecoration(
                 color: AppColors.cardWhite,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppColors.borderColor),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<int>(
@@ -1418,7 +1418,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
               decoration: BoxDecoration(
                 color: AppColors.cardWhite,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppColors.borderColor),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<int>(
@@ -1574,14 +1574,14 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                             labelText: "Pilih Tanggal",
                             labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blueGrey[700]),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: Colors.grey.shade300)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: Colors.grey.shade300)),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: AppColors.borderColor)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: AppColors.borderColor)),
                           ),
                           child: Row(
                             children: [
                               Text(_formatDate(_selectedDate.toString()), style: const TextStyle(fontSize: 15)),
                               const Spacer(),
-                              const Icon(Icons.calendar_month, size: 20, color: Colors.grey),
+                              Icon(Icons.calendar_month, size: 20, color: AppColors.textMuted),
                             ],
                           ),
                         ),
@@ -1613,7 +1613,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                       Expanded(
                         child: TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text("BATAL", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                          child: Text("BATAL", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMuted)),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1656,14 +1656,14 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
           labelText: label,
           labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blueGrey[700]),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: Colors.grey.shade300)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: Colors.grey.shade300)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: AppColors.borderColor)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: AppColors.borderColor)),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
             value: value,
             isExpanded: true,
-            icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+            icon: Icon(Icons.arrow_drop_down, color: AppColors.textMuted),
             items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 15)))).toList(),
             onChanged: onChanged,
           ),
@@ -1831,16 +1831,16 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
             decoration: BoxDecoration(
               color: AppColors.backgroundColor,
               borderRadius: BorderRadius.circular(_isMobile ? 10 : 12),
-              border: Border.all(color: Colors.grey.shade100),
+              border: Border.all(color: AppColors.borderColor),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: selectedValue,
                 isExpanded: true,
-                icon: Icon(Icons.keyboard_arrow_down_rounded, size: _isMobile ? 16 : 18, color: const Color(0xFF94A3B8)),
+                icon: Icon(Icons.keyboard_arrow_down_rounded, size: _isMobile ? 16 : 18, color: AppColors.textSecondary),
                 style: TextStyle(
                   fontSize: _isMobile ? 11 : 12, 
-                  color: const Color(0xFF1E293B), 
+                  color: AppColors.textDark, 
                   fontWeight: FontWeight.w600,
                 ),
                 items: items.map((String value) {
@@ -1905,12 +1905,14 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   }
 
   Widget _statusChip(String status) {
-    final color = status == "Hadir" ? colorHadir : (status == "Alfa" ? colorAlfa : colorIzin);
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: Text(status, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)));
+
+    final bg = status == "Hadir" ? AppColors.paleGreen : (status == "Alfa" ? AppColors.paleRed : AppColors.paleYellow);
+    final fg = status == "Hadir" ? AppColors.paleGreenText : (status == "Alfa" ? AppColors.paleRedText : AppColors.paleYellowText);
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)), child: Text(status, style: TextStyle(color: fg, fontSize: 10, fontWeight: FontWeight.bold)));
   }
 
   Widget _optionBtn(String label, Color color, bool isSelected, VoidCallback onTap) {
-    return Expanded(child: GestureDetector(onTap: onTap, child: Container(margin: const EdgeInsets.symmetric(horizontal: 4), padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: isSelected ? color : bgColor, borderRadius: BorderRadius.circular(12)), child: Center(child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : AppColors.textMuted))))));
+    return Expanded(child: GestureDetector(onTap: onTap, child: Container(margin: const EdgeInsets.symmetric(horizontal: 4), padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: isSelected ? color : AppColors.accentAdaptive, borderRadius: BorderRadius.circular(12)), child: Center(child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : AppColors.textMuted))))));
   }
 
   Widget _buildEmptyState() {
@@ -1967,7 +1969,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   gradient: LinearGradient(
-                    colors: [primaryTeal, const Color(0xFF0F766E)],
+                    colors: [primaryTeal, AppColors.isDark ? AppColors.brandDark : const Color(0xFF0F766E)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

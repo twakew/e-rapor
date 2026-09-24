@@ -340,7 +340,7 @@ class _ProfilPageState extends State<ProfilPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF64748B)),
+          Icon(icon, size: 16, color: AppColors.textSecondary),
           const SizedBox(width: 8),
           Text(
             text,

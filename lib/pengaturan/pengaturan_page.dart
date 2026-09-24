@@ -315,11 +315,11 @@ class _PengaturanPageState extends State<PengaturanPage> {
       subtitle: subtitle != null
           ? Text(
               subtitle,
-              style: TextStyle(fontSize: 12, color: const Color(0xFF64748B)),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             )
           : null,
       trailing: showTrailing
-          ? Icon(Icons.arrow_forward_ios_rounded, size: 14, color: const Color(0xFF94A3B8))
+          ? Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textSecondary)
           : null,
     );
   }

@@ -384,7 +384,7 @@ class _AngkatanPageState extends State<AngkatanPage> {
               ),
               _tableCell('${data['total']}', 2),
               _tableCell('${data['aktif']}', 2, bold: true, color: primaryTeal),
-              _tableCell('${data['lulus']}', 2, bold: true, color: const Color(0xFF059669)),
+              _tableCell('${data['lulus']}', 2, bold: true, color: AppColors.successGreen),
               Expanded(
                 flex: 2,
                 child: Align(

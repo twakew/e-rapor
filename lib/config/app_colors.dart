@@ -29,8 +29,8 @@ class AppColors {
 
   // --- Text (gelap = versi redup, tetap AA di atas cardWhite mode gelap) ---
   static Color get textDark => isDark ? const Color(0xFFF4F4F6) : const Color(0xFF111111);
-  static Color get textSecondary => isDark ? const Color(0xFFB5B8C0) : const Color(0xFF5F5F5C);
-  static Color get textMuted => isDark ? const Color(0xFF8B909A) : const Color(0xFF6B7280);
+  static Color get textSecondary => isDark ? const Color(0xFFC7CBD5) : const Color(0xFF5F5F5C);
+  static Color get textMuted => isDark ? const Color(0xFFA3A9B7) : const Color(0xFF6B7280);
 
   // --- Borders & Dividers ---
   static Color get borderColor => isDark ? const Color(0xFF2C3038) : const Color(0xFFEAEAEA);

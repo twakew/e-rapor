@@ -1,3 +1,4 @@
+import '../config/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:http/http.dart' as http;
@@ -241,7 +242,7 @@ class _DetailDokumentasiPageState extends State<DetailDokumentasiPage> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF0D9488),
+                                  color: AppColors.brand,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
