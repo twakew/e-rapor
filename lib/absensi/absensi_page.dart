@@ -1027,15 +1027,10 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
               return Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardWhite,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    )
-                  ],
+                  border: Border.all(color: AppColors.borderColor),
+                  boxShadow: AppColors.cardShadow,
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
@@ -1464,7 +1459,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
         child: Container(
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)]),
+          decoration: BoxDecoration(color: AppColors.cardWhite, borderRadius: BorderRadius.circular(30), border: Border.all(color: AppColors.borderColor), boxShadow: AppColors.cardShadow),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1771,15 +1766,10 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       padding: EdgeInsets.all(_isMobile ? 12 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          )
-        ],
+        border: Border.all(color: AppColors.borderColor),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Row(
         children: [

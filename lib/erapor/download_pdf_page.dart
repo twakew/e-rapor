@@ -292,9 +292,22 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _isSelectionMode 
+          _isSelectionMode
               ? Text('${_selectedIds.length} Terpilih', style: TextStyle(color: primaryTeal, fontWeight: FontWeight.bold, fontSize: 24))
-              : Text('Download Nilai', style: TextStyle(color: primaryTeal, fontWeight: FontWeight.bold, fontSize: 24)),
+              : Row(
+                  children: [
+                    Text('Download Nilai', style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 24)),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.paleBlue,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text('${studentIds.length} siswa', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText)),
+                    ),
+                  ],
+                ),
           if (_isSelectionMode)
             IconButton(
               onPressed: () => _downloadPdfs(targetIds: _selectedIds.toList()),
@@ -608,16 +621,10 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          )
-        ],
-        border: isSelected ? Border.all(color: primaryTeal, width: 2) : null,
+        boxShadow: AppColors.cardShadow,
+        border: isSelected ? Border.all(color: primaryTeal, width: 2) : Border.all(color: AppColors.borderColor),
       ),
       child: Material(
         color: Colors.transparent,

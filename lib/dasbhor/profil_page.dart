@@ -181,7 +181,7 @@ class _ProfilPageState extends State<ProfilPage> {
                     style: TextStyle(
                       fontSize: isMobile ? 20 : 26,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.textDark,
                     ),
                   ),
                 ],
