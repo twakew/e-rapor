@@ -27,7 +27,7 @@ class _AngkatanPageState extends State<AngkatanPage> {
 
   // Project Palette
   Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
-  final Color primaryBlue = AppColors.secondary;
+  Color get primaryBlue => AppColors.isDark ? AppColors.brand : AppColors.secondary;
   final Color darkNavy = AppColors.textDark;
   final Color backgroundColor = AppColors.backgroundColor;
   final Color bgLight = AppColors.backgroundColor;

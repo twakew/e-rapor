@@ -95,7 +95,7 @@ class _PengaturanPageState extends State<PengaturanPage> {
                   style: TextStyle(
                     fontSize: isMobile ? 20 : 26,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: AppColors.textDark,
                   ),
                 ),
               ],
@@ -259,7 +259,7 @@ class _PengaturanPageState extends State<PengaturanPage> {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: AppColors.primary,
+          color: AppColors.textDark,
           letterSpacing: 0.5,
         ),
       ),
@@ -309,7 +309,7 @@ class _PengaturanPageState extends State<PengaturanPage> {
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 15,
-          color: titleColor ?? const Color(0xFF0F172A),
+          color: titleColor ?? AppColors.textDark,
         ),
       ),
       subtitle: subtitle != null

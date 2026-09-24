@@ -36,7 +36,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
   DateTime _reportDate = DateTime.now();
 
   // --- Clean Palette based on Project Style (Teal) ---
-  final Color primaryGreen = AppColors.primary;
+  Color get primaryGreen => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color darkNavy = AppColors.textDark;
   final Color textSecondary = const Color(0xFF64748B);
   final Color textMuted = Color(0xFF94A3B8);
@@ -197,7 +197,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
+                      color: AppColors.borderColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -499,7 +499,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
         decoration: BoxDecoration(
           color: isAction ? primaryGreen.withValues(alpha: 0.05) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isAction ? primaryGreen.withValues(alpha: 0.3) : const Color(0xFFE2E8F0)),
+          border: Border.all(color: isAction ? primaryGreen.withValues(alpha: 0.3) : AppColors.borderColor),
         ),
         child: Row(
           children: [
@@ -555,8 +555,8 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
 
   Widget _buildHorizontalTabs() {
     return Container(
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.borderColor)),
       ),
       child: TabBar(
         controller: _mainTabController,
@@ -589,7 +589,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
           decoration: BoxDecoration(
             color: AppColors.cardWhite,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: active ? primaryGreen : const Color(0xFFE2E8F0)),
+            border: Border.all(color: active ? primaryGreen : AppColors.borderColor),
           ),
           child: ExpansionTile(
             initiallyExpanded: active,
@@ -616,7 +616,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -791,7 +791,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
       decoration: _isMobile ? null : BoxDecoration(
         color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -877,7 +877,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
               controller: _notesControllers[category],
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.borderColor)),
                 filled: true,
                 fillColor: bgLight,
                 hintText: 'Contoh: 15',
@@ -924,7 +924,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
           decoration: BoxDecoration(
             color: sel ? color.withValues(alpha: 0.05) : Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: sel ? color : const Color(0xFFE2E8F0), width: 2),
+            border: Border.all(color: sel ? color : AppColors.borderColor, width: 2),
           ),
           child: Column(
             children: [
@@ -953,7 +953,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
                 height: 80,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.borderColor),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -988,7 +988,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
               decoration: BoxDecoration(
                 color: bgLight,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0), style: BorderStyle.solid),
+                border: Border.all(color: AppColors.borderColor, style: BorderStyle.solid),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1007,7 +1007,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
   Widget _buildEditorBox(String category) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE2E8F0)), 
+        border: Border.all(color: AppColors.borderColor), 
         borderRadius: BorderRadius.circular(12)
       ),
       child: TextField(

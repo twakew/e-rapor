@@ -25,7 +25,7 @@ class _DataSekolahPageState extends State<DataSekolahPage> {
 
   // --- Color Palette ---
   Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
-  final Color surfaceColor = Colors.white;
+  Color get surfaceColor => AppColors.cardWhite;
   final Color scaffoldBg = AppColors.backgroundColor;
   final Color textHighlight = AppColors.textDark;
   final Color textDim = AppColors.textSecondary;

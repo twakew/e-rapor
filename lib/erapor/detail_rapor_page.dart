@@ -36,7 +36,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
   final Color primaryGreen = AppColors.primary;
   final Color darkNavy = AppColors.textDark;
   final Color textSecondary = const Color(0xFF64748B);
-  final Color textMuted = Color(0xFF94A3B8);
+  Color get textMuted => AppColors.textMuted;
   final Color bgLight = AppColors.backgroundColor;
   
   final Color colorBSB = const Color(0xFF10B981); // Emerald
@@ -293,7 +293,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Row(
         children: [
@@ -382,7 +382,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -438,7 +438,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
           decoration: BoxDecoration(
             color: AppColors.cardWhite,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.borderColor),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,16 +466,16 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Column(
         children: [
           _growthRow('Berat Badan', data['Berat Badan']?['score'] ?? '-', 'kg'),
           _growthRow('Tinggi Badan', data['Tinggi Badan']?['score'] ?? '-', 'cm'),
           _growthRow('Lingkar Kepala', data['Lingkar Kepala']?['score'] ?? '-', 'cm'),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(color: Color(0xFFE2E8F0), height: 1),
+            child: Divider(color: AppColors.borderColor, height: 1),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
