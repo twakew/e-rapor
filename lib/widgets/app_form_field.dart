@@ -19,7 +19,7 @@ class AppFormSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderColor),
         boxShadow: AppColors.cardShadow,
@@ -33,7 +33,7 @@ class AppFormSection extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textDark,
@@ -84,14 +84,14 @@ class AppTextField extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
                 color: AppColors.textDark,
               ),
             ),
             if (required)
-              const Text(' *', style: TextStyle(color: AppColors.errorRed, fontSize: 13)),
+              Text(' *', style: TextStyle(color: AppColors.errorRed, fontSize: 13)),
           ],
         ),
         const SizedBox(height: 8),
@@ -99,10 +99,10 @@ class AppTextField extends StatelessWidget {
           controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+            hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
             prefixIcon: prefixIcon != null
                 ? Icon(prefixIcon, color: AppColors.primary, size: 20)
                 : null,
@@ -112,19 +112,19 @@ class AppTextField extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderColor),
+              borderSide: BorderSide(color: AppColors.borderColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderColor),
+              borderSide: BorderSide(color: AppColors.borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.errorRed),
+              borderSide: BorderSide(color: AppColors.errorRed),
             ),
           ),
           validator: validator ??
@@ -161,14 +161,14 @@ class AppDateField extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
                 color: AppColors.textDark,
               ),
             ),
             if (required)
-              const Text(' *', style: TextStyle(color: AppColors.errorRed, fontSize: 13)),
+              Text(' *', style: TextStyle(color: AppColors.errorRed, fontSize: 13)),
           ],
         ),
         const SizedBox(height: 8),
@@ -176,29 +176,29 @@ class AppDateField extends StatelessWidget {
           controller: controller,
           readOnly: true,
           onTap: onTap,
-          style: const TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Pilih $label',
-            hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+            hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
             prefixIcon: prefixIcon != null
                 ? Icon(prefixIcon, color: AppColors.primary, size: 20)
                 : null,
-            suffixIcon: const Icon(Icons.calendar_month_outlined, size: 18, color: AppColors.textMuted),
+            suffixIcon: Icon(Icons.calendar_month_outlined, size: 18, color: AppColors.textMuted),
             filled: true,
             fillColor: AppColors.backgroundColor,
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderColor),
+              borderSide: BorderSide(color: AppColors.borderColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderColor),
+              borderSide: BorderSide(color: AppColors.borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
             ),
           ),
         ),
@@ -235,22 +235,22 @@ class AppDropdownField extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
                 color: AppColors.textDark,
               ),
             ),
             if (required)
-              const Text(' *', style: TextStyle(color: AppColors.errorRed, fontSize: 13)),
+              Text(' *', style: TextStyle(color: AppColors.errorRed, fontSize: 13)),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: items.contains(selectedValue) ? selectedValue : null,
           decoration: InputDecoration(
             hintText: 'Pilih $label',
-            hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+            hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
             prefixIcon: prefixIcon != null
                 ? Icon(prefixIcon, color: AppColors.primary, size: 20)
                 : null,
@@ -260,15 +260,15 @@ class AppDropdownField extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderColor),
+              borderSide: BorderSide(color: AppColors.borderColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderColor),
+              borderSide: BorderSide(color: AppColors.borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
             ),
           ),
           items: items

@@ -17,7 +17,6 @@ Future<void> main() async {
 
   // Jalankan service notifikasi (OneSignal)
   await PushNotificationService.initialize();
-
   runApp(const MyApp());
 }
 
@@ -34,13 +33,148 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    
+
     // Inisialisasi pendengar notifikasi dengan navigator key
     PushNotificationService.listenNotifications(_navigatorKey);
-    
-    // Auth state changes need custom implementation if still required
-    // (e.g. using a stream in ApiService, or handling timeouts manually).
+  }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Sinkronkan token adaptif AppColors dengan brightness OS —
+    // dipanggil sebelum build awal dan saat tema OS berubah.
+    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    if (AppColors.isDark != dark) AppColors.isDark = dark;
+  }
+
+  // Komponen tema bersama. Semua warna dari token adaptif AppColors,
+  // sehingga theme (terang) dan darkTheme (gelap) otomatis mengikuti isDark.
+  ThemeData _buildTheme(ColorScheme scheme) {
+    return ThemeData(
+      useMaterial3: true,
+      // Selaras dengan AppColors (warm monochrome) — jangan dari seed indigo,
+      // dulu semua widget Material bawaan berwarna ungu di tengah UI abu-abu.
+      colorScheme: scheme,
+      scaffoldBackgroundColor: AppColors.backgroundColor,
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(),
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.cardWhite,
+        foregroundColor: AppColors.textDark,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        titleTextStyle: TextStyle(
+          color: AppColors.textDark,
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.brand,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.textDark,
+          side: BorderSide(color: AppColors.borderColor),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.backgroundColor,
+        hintStyle: TextStyle(color: AppColors.textMuted),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.brand, width: 1.8),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.cardWhite,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.cardWhite,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: AppColors.borderColor),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: AppColors.brand),
+      ),
+      listTileTheme: ListTileThemeData(
+        iconColor: AppColors.textSecondary,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.textDark,
+        contentTextStyle: const TextStyle(color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected) ? Colors.white : AppColors.textMuted,
+        ),
+        trackOutlineColor: WidgetStateProperty.all(AppColors.borderColor),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.brandSoft,
+        labelStyle: const TextStyle(color: AppColors.brandDark, fontWeight: FontWeight.w600),
+        side: BorderSide(color: AppColors.brandSofter),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: AppColors.brand,
+        linearTrackColor: AppColors.brandSoft,
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.brand,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
+      ),
+      scrollbarTheme: ScrollbarThemeData(
+        thumbColor: WidgetStateProperty.all(
+          AppColors.isDark
+              ? Colors.white.withValues(alpha: 0.25)
+              : Colors.black.withValues(alpha: 0.25),
+        ),
+        thickness: WidgetStateProperty.all(6),
+        radius: const Radius.circular(3),
+      ),
+      dividerTheme: DividerThemeData(
+        color: AppColors.borderColor,
+        thickness: 1,
+      ),
+    );
   }
 
   @override
@@ -48,142 +182,44 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       navigatorKey: _navigatorKey,
       title: 'Lapor Sekola e-Rapor',
-      theme: ThemeData(
-        useMaterial3: true,
-        // Selaras dengan AppColors (warm monochrome) — jangan dari seed indigo,
-        // dulu semua widget Material bawaan berwarna ungu di tengah UI abu-abu.
-        colorScheme: const ColorScheme.light(
+      theme: _buildTheme(
+        const ColorScheme.light(
           primary: AppColors.brand,
           onPrimary: Colors.white,
-          primaryContainer: AppColors.brandSofter,
+          primaryContainer: Color(0xFFE0E7FF),
           onPrimaryContainer: AppColors.brandDark,
           secondary: AppColors.secondary,
           onSecondary: Colors.white,
-          secondaryContainer: AppColors.brandSoft,
+          secondaryContainer: Color(0xFFEEF2FF),
           onSecondaryContainer: AppColors.brandDark,
-          surface: AppColors.cardWhite,
-          onSurface: AppColors.textDark,
-          error: AppColors.errorRed,
+          surface: Color(0xFFFFFFFF),
+          onSurface: Color(0xFF111111),
+          error: Color(0xFF9F2F2D),
           onError: Colors.white,
-          outline: AppColors.borderColor,
-          outlineVariant: AppColors.borderColor,
-        ),
-        scaffoldBackgroundColor: AppColors.backgroundColor,
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.cardWhite,
-          foregroundColor: AppColors.textDark,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          titleTextStyle: TextStyle(
-            color: AppColors.textDark,
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.brand,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            textStyle: const TextStyle(fontWeight: FontWeight.w700),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.textDark,
-            side: const BorderSide(color: AppColors.borderColor),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: AppColors.backgroundColor,
-          hintStyle: const TextStyle(color: AppColors.textMuted),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.brand, width: 1.8),
-          ),
-        ),
-        dialogTheme: DialogThemeData(
-          backgroundColor: AppColors.cardWhite,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        ),
-        cardTheme: CardThemeData(
-          color: AppColors.cardWhite,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          margin: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: AppColors.borderColor),
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(foregroundColor: AppColors.brand),
-        ),
-        listTileTheme: const ListTileThemeData(
-          iconColor: AppColors.textSecondary,
-        ),
-        snackBarTheme: SnackBarThemeData(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.textDark,
-          contentTextStyle: const TextStyle(color: Colors.white),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
-        switchTheme: SwitchThemeData(
-          thumbColor: WidgetStateProperty.resolveWith(
-            (states) => states.contains(WidgetState.selected) ? Colors.white : AppColors.textMuted,
-          ),
-          trackOutlineColor: WidgetStateProperty.all(AppColors.borderColor),
-        ),
-        checkboxTheme: CheckboxThemeData(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        ),
-        chipTheme: ChipThemeData(
-          backgroundColor: AppColors.brandSoft,
-          labelStyle: const TextStyle(color: AppColors.brandDark, fontWeight: FontWeight.w600),
-          side: const BorderSide(color: AppColors.brandSofter),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-        progressIndicatorTheme: const ProgressIndicatorThemeData(
-          color: AppColors.brand,
-          linearTrackColor: AppColors.brandSoft,
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: AppColors.brand,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(16)),
-          ),
-        ),
-        scrollbarTheme: ScrollbarThemeData(
-          thumbColor: WidgetStateProperty.all(Colors.black.withValues(alpha: 0.25)),
-          thickness: WidgetStateProperty.all(6),
-          radius: const Radius.circular(3),
-        ),
-        dividerTheme: const DividerThemeData(
-          color: AppColors.borderColor,
-          thickness: 1,
+          outline: Color(0xFFEAEAEA),
+          outlineVariant: Color(0xFFEAEAEA),
         ),
       ),
+      darkTheme: _buildTheme(
+        const ColorScheme.dark(
+          primary: AppColors.brand,
+          onPrimary: Colors.white,
+          primaryContainer: Color(0xFF312E81),
+          onPrimaryContainer: Color(0xFFE0E7FF),
+          secondary: AppColors.brand,
+          onSecondary: Colors.white,
+          secondaryContainer: Color(0xFF34306E),
+          onSecondaryContainer: Color(0xFFEEF2FF),
+          surface: Color(0xFF1A1D24),
+          onSurface: Color(0xFFF4F4F6),
+          error: Color(0xFFE1716E),
+          onError: Color(0xFF1A1D24),
+          outline: Color(0xFF2C3038),
+          outlineVariant: Color(0xFF2C3038),
+        ),
+      ),
+      // Ikuti tema OS; switch in-app = upgrade path di Pengaturan.
+      themeMode: ThemeMode.system,
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );

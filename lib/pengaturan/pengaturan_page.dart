@@ -64,7 +64,7 @@ class _PengaturanPageState extends State<PengaturanPage> {
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
+        MaterialPageRoute(builder: (context) => LoginPage()),
         (route) => false,
       );
     }
@@ -85,10 +85,10 @@ class _PengaturanPageState extends State<PengaturanPage> {
               children: [
                 if (!widget.isEmbedded) ...[
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primary, size: 20),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primary, size: 20),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                 ],
                 Text(
                   'Pengaturan',
@@ -275,7 +275,7 @@ class _PengaturanPageState extends State<PengaturanPage> {
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),

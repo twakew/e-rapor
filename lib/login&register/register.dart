@@ -374,17 +374,17 @@ class _RegisterPageState extends State<RegisterPage> {
                           BoxShadow(
                             color: AppColors.primary.withValues(alpha: 0.08),
                             blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.primary),
+                        icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.primary),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Text(
+                    Text(
                       'Pendaftaran Guru',
                       style: TextStyle(
                         fontSize: 18,
@@ -500,7 +500,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 color: AppColors.accent,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Hero(
+              child: Hero(
                 tag: 'app_logo',
                 child: Icon(
                   Icons.person_add_alt_1_rounded,
@@ -511,7 +511,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Buat Akun Baru',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -522,7 +522,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Daftarkan diri Anda sebagai Tenaga Pengajar / Guru\nuntuk mengakses manajemen e-Rapor sekolah.',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -547,7 +547,7 @@ class _RegisterPageState extends State<RegisterPage> {
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.06),
             blurRadius: 30,
-            offset: const Offset(0, 10),
+            offset: Offset(0, 10),
             spreadRadius: 2,
           ),
         ],
@@ -567,7 +567,7 @@ class _RegisterPageState extends State<RegisterPage> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(Icons.shield_outlined, color: AppColors.primary, size: 18),
                 SizedBox(width: 10),
@@ -633,7 +633,7 @@ class _RegisterPageState extends State<RegisterPage> {
             height: 52,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 colors: [
                   AppColors.brand,
                   AppColors.brandDark,
@@ -694,7 +694,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           'Sudah memiliki akun?',
           style: TextStyle(
             color: AppColors.textSecondary,
@@ -736,7 +736,7 @@ class _RegisterPageState extends State<RegisterPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
             color: AppColors.textDark,
@@ -747,7 +747,7 @@ class _RegisterPageState extends State<RegisterPage> {
           controller: controller,
           obscureText: isObscured,
           keyboardType: keyboardType,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13.5,
             color: AppColors.textDark,
@@ -785,10 +785,10 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.8),
             ),
             hintText: hint,
-            hintStyle: const TextStyle(
+            hintStyle: TextStyle(
               color: AppColors.textMuted,
               fontWeight: FontWeight.normal,
               fontSize: 12.5,

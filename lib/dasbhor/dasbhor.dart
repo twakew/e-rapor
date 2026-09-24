@@ -39,7 +39,7 @@ class DasbhorPage extends StatefulWidget {
   final String? studentName;
   final String? studentNis;
   final String? studentClass;
-  const DasbhorPage({super.key, this.initialRole, this.studentName, this.studentNis, this.studentClass});
+  DasbhorPage({super.key, this.initialRole, this.studentName, this.studentNis, this.studentClass});
 
   @override
   State<DasbhorPage> createState() => _DasbhorPageState();
@@ -245,7 +245,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
         } else {
           // Logic "double tap to exit" for Dashboard (index 0)
           final now = DateTime.now();
-          if (_lastQuitTime == null || now.difference(_lastQuitTime!) > const Duration(seconds: 2)) {
+          if (_lastQuitTime == null || now.difference(_lastQuitTime!) > Duration(seconds: 2)) {
             _lastQuitTime = now;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -253,7 +253,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
                   children: [
                     Icon(Icons.info_outline, color: AppColors.cardWhite, size: 18),
                     const SizedBox(width: 12),
-                    const Text(
+                    Text(
                       'Tekan sekali lagi untuk keluar',
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
@@ -420,7 +420,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
     double width = effectivelyCollapsed ? 80 : 280;
     
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+      duration: Duration(milliseconds: 300),
       curve: Curves.fastOutSlowIn,
       width: width,
       clipBehavior: Clip.hardEdge,
@@ -1025,7 +1025,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
     // Baris kartu statistik ala reference: angka besar + tile ikon semantic.
     return GridView(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      physics: NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: isMobile ? 2 : 4,
         crossAxisSpacing: 16,
@@ -1221,7 +1221,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
-                gridData: const FlGridData(show: false),
+                gridData: FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 barGroups: [
                   _makeBarGroup(0, _totalSiswa.toDouble(), AppColors.chartGreen, maxVal),
@@ -1315,7 +1315,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10),
                       Text(
                         isMobile ? 'E-Rapor Digital' : 'E-Rapor $_schoolName',
                         style: TextStyle(
@@ -1326,7 +1326,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
                           letterSpacing: -0.3,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(
                         'Kelola data akademik dengan efisien',
                         style: TextStyle(
@@ -1346,7 +1346,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
                             'Waktu',
                             AppColors.paleBlue
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           _heroInfoCard(
                             Icons.calendar_month_rounded,
                             isMobile ? DateFormat('d MMM yy', 'id_ID').format(_currentTime) : DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(_currentTime),

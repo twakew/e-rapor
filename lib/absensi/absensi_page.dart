@@ -30,7 +30,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   final Color colorHadir = const Color(0xFF10B981);
   final Color colorIzin = const Color(0xFFF59E0B);
   final Color colorSakit = const Color(0xFF3B82F6);
-  final Color colorAlfa = const Color(0xFFEF4444);
+  final Color colorAlfa = Color(0xFFEF4444);
 
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;

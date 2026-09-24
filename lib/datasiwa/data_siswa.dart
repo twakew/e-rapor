@@ -14,7 +14,7 @@ class DataSiswaPage extends StatefulWidget {
   final String? userName;
   final String? userRole;
   final Function(int, {Map<String, dynamic>? student})? onNavigate;
-  const DataSiswaPage({super.key, this.studentNis, this.studentClass, this.isEmbedded = false, this.userName, this.userRole, this.onNavigate});
+  DataSiswaPage({super.key, this.studentNis, this.studentClass, this.isEmbedded = false, this.userName, this.userRole, this.onNavigate});
 
   @override
   State<DataSiswaPage> createState() => _DataSiswaPageState();
@@ -251,7 +251,7 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
               ),
               child: Text(
                 '${_filtered.length} dari ${_all.length} data',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
               ),
             ),
           ],
@@ -409,7 +409,7 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
                 child: Container(
                   height: 45,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.cardWhite,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.grey.shade200),
                   ),
@@ -708,7 +708,7 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => TambahSiswaPage(student: s)));
                           }
                         }),
-                      if (widget.userRole != 'User') const SizedBox(width: 8),
+                      if (widget.userRole != 'User') SizedBox(width: 8),
                       if (widget.userRole != 'User')
                         _actionBtn(Icons.delete_outline, Colors.red, onTap: () => _deleteStudent(s)),
                     ],

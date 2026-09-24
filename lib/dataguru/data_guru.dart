@@ -10,7 +10,7 @@ class DataGuruPage extends StatefulWidget {
   final bool isEmbedded;
   final String? userRole;
   final Function(int, {Map<String, dynamic>? teacher})? onNavigate;
-  const DataGuruPage({super.key, this.isEmbedded = false, this.userRole, this.onNavigate});
+  DataGuruPage({super.key, this.isEmbedded = false, this.userRole, this.onNavigate});
 
   @override
   State<DataGuruPage> createState() => _DataGuruPageState();
@@ -231,7 +231,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
               ),
               child: Text(
                 '${_filtered.length} dari ${_all.length} data',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
               ),
             ),
           ],
@@ -295,7 +295,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         side: BorderSide(color: Colors.grey.shade200),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.cardWhite,
       ),
     );
   }
@@ -364,7 +364,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
                 child: Container(
                   height: 45,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.cardWhite,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.grey.shade200),
                   ),
@@ -657,7 +657,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))

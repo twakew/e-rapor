@@ -38,7 +38,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
   final Color primaryGreen = AppColors.primary;
   final Color darkNavy = AppColors.textDark;
   final Color textSecondary = const Color(0xFF64748B);
-  final Color textMuted = const Color(0xFF94A3B8);
+  final Color textMuted = Color(0xFF94A3B8);
   final Color bgLight = AppColors.backgroundColor;
   
   final Color colorBSB = const Color(0xFF10B981); // Emerald
@@ -177,7 +177,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
               ),
               child: Text(
                 '${_filteredStudents.length} dari ${_students.length} siswa',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
               ),
             ),
           ],
@@ -229,7 +229,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
                 child: Container(
                   height: 45,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.cardWhite,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.grey.shade200),
                   ),
@@ -377,7 +377,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
         children: [
           ListView.builder(
             shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+            physics: NeverScrollableScrollPhysics(),
             itemCount: _filteredStudents.length,
             itemBuilder: (context, index) {
               return _flatStudentRow(_filteredStudents[index]);
@@ -445,7 +445,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
     return Container(
       margin: desktop ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isDone ? const Color(0xFFF0FDF4) : AppColors.cardWhite,
+        color: isDone ? Color(0xFFF0FDF4) : AppColors.cardWhite,
         borderRadius: desktop ? BorderRadius.zero : BorderRadius.circular(20),
         boxShadow: desktop
             ? null
@@ -453,12 +453,12 @@ class _PenilaianPageState extends State<PenilaianPage> {
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.03),
                   blurRadius: 15,
-                  offset: const Offset(0, 5),
+                  offset: Offset(0, 5),
                 )
               ],
         border: desktop
-            ? const Border(bottom: BorderSide(color: AppColors.borderColor))
-            : Border.all(color: isDone ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9), width: 1.2),
+            ? Border(bottom: BorderSide(color: AppColors.borderColor))
+            : Border.all(color: isDone ? const Color(0xFFDCFCE7) : Color(0xFFF1F5F9), width: 1.2),
       ),
       child: ClipRRect(
         borderRadius: desktop ? BorderRadius.zero : BorderRadius.circular(20),

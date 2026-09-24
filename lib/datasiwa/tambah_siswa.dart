@@ -639,7 +639,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
           controller: ctrl,
           maxLines: maxLines,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: textMuted, fontSize: 13),

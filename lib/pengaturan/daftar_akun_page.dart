@@ -197,7 +197,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Ya, Hapus'),
+            child: Text('Ya, Hapus'),
           ),
         ],
       ),
@@ -223,7 +223,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                     },
                   ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'Daftar Akun',
                   style: TextStyle(
                     fontSize: 26,
@@ -360,11 +360,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFFF1F5F9)),
+            borderSide: BorderSide(color: Color(0xFFF1F5F9)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1),
+            borderSide: BorderSide(color: AppColors.primary, width: 1),
           ),
         ),
       ),

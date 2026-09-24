@@ -162,7 +162,7 @@ class _AngkatanPageState extends State<AngkatanPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white, 
+              color: AppColors.cardWhite, 
               borderRadius: BorderRadius.circular(12), 
               border: Border.all(color: borderColor)
             ),
@@ -201,7 +201,7 @@ class _AngkatanPageState extends State<AngkatanPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white, 
+              color: AppColors.cardWhite, 
               borderRadius: BorderRadius.circular(12), 
               border: Border.all(color: borderColor)
             ),
@@ -411,7 +411,7 @@ class _AngkatanPageState extends State<AngkatanPage> {
       child: Container(
         padding: EdgeInsets.all(_isMobile ? 12 : 20), 
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor),
           boxShadow: [
@@ -534,8 +534,8 @@ class _AngkatanDetailSheetState extends State<_AngkatanDetailSheet> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
@@ -635,7 +635,7 @@ class _AngkatanDetailSheetState extends State<_AngkatanDetailSheet> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 4)),

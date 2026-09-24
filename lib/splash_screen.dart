@@ -136,7 +136,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         children: [
           // Background Gradient Deep Indigo matching AppColors
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -241,7 +241,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                     BoxShadow(
                                       color: Colors.black.withValues(alpha: 0.25),
                                       blurRadius: 36,
-                                      offset: const Offset(0, 12),
+                                      offset: Offset(0, 12),
                                     ),
                                     BoxShadow(
                                       color: AppColors.primary.withValues(alpha: 0.4),
@@ -256,7 +256,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                     color: AppColors.accent,
                                     borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: const Hero(
+                                  child: Hero(
                                     tag: 'app_logo',
                                     child: Icon(
                                       Icons.school_rounded,

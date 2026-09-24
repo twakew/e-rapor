@@ -304,7 +304,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
                         color: AppColors.paleBlue,
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: Text('${studentIds.length} siswa', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText)),
+                      child: Text('${studentIds.length} siswa', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText)),
                     ),
                   ],
                 ),

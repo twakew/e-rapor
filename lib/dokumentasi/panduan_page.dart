@@ -4,7 +4,7 @@ import 'package:laporsekolaherapor/config/app_colors.dart';
 class PanduanPage extends StatefulWidget {
   final Function(int)? onNavigate;
 
-  const PanduanPage({super.key, this.onNavigate});
+  PanduanPage({super.key, this.onNavigate});
 
   @override
   State<PanduanPage> createState() => _PanduanPageState();

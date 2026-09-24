@@ -38,7 +38,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
   final Color backgroundColor = AppColors.backgroundColor;
   final Color textDark = const Color(0xFF0F172A);
   final Color textSecondary = const Color(0xFF64748B);
-  final Color textMuted = const Color(0xFF94A3B8);
+  final Color textMuted = Color(0xFF94A3B8);
   final Color borderColor = AppColors.borderColor;
 
   @override

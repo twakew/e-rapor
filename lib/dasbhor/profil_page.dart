@@ -175,7 +175,7 @@ class _ProfilPageState extends State<ProfilPage> {
                         if (widget.onNavigate != null) widget.onNavigate!(widget.returnIndex);
                       },
                     ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'Profil Saya',
                     style: TextStyle(
@@ -205,7 +205,7 @@ class _ProfilPageState extends State<ProfilPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
@@ -242,8 +242,8 @@ class _ProfilPageState extends State<ProfilPage> {
                 bottom: -45,
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: AppColors.cardWhite,
                     shape: BoxShape.circle,
                   ),
                   child: Container(
@@ -388,7 +388,7 @@ class _ProfilPageState extends State<ProfilPage> {
     return Row(
       children: [
         Expanded(child: _miniStat(Icons.person_rounded, 'Bergabung', _userData?['joined'] ?? '-', AppColors.primary)),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(child: _miniStat(Icons.access_time_rounded, 'Terakhir Masuk', _userData?['last_login'] ?? '-', AppColors.secondary)),
         const SizedBox(width: 12),
         Expanded(child: _miniStat(Icons.shield_outlined, 'Status', _userData?['status'] ?? 'Aktif', const Color(0xFF22C55E))),
@@ -400,7 +400,7 @@ class _ProfilPageState extends State<ProfilPage> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
       ),
@@ -426,7 +426,7 @@ class _ProfilPageState extends State<ProfilPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 5))],
       ),
@@ -458,7 +458,7 @@ class _ProfilPageState extends State<ProfilPage> {
       margin: const EdgeInsets.only(top: 24),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 5))],
       ),

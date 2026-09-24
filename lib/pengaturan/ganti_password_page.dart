@@ -82,7 +82,7 @@ class _GantiPasswordPageState extends State<GantiPasswordPage> {
                         },
                       ),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       'Ganti Kata Sandi',
                       style: TextStyle(
                         fontSize: 26,
@@ -110,7 +110,7 @@ class _GantiPasswordPageState extends State<GantiPasswordPage> {
                 hint: 'Ulangi kata sandi baru',
                 isConfirm: true,
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
               SizedBox(
                 height: 55,
                 child: ElevatedButton(

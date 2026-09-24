@@ -81,18 +81,18 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.accent,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.lock_reset_rounded,
                       size: 40,
                       color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Lupa Kata Sandi',
                     style: TextStyle(
                       fontSize: 20,
@@ -101,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Untuk keamanan akun, kata sandi hanya dapat diatur ulang oleh admin sekolah. Silakan hubungi admin sekolah untuk mereset kata sandi Anda.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -741,7 +741,7 @@ class _LoginPageState extends State<LoginPage> {
               color: AppColors.primary.withValues(alpha: 0.15),
             ),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.verified_user_rounded, size: 14, color: AppColors.primary),
@@ -759,7 +759,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         const SizedBox(height: 10),
-        const Text(
+        Text(
           'Selamat Datang',
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -770,7 +770,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Silakan masuk ke akun e-Rapor Anda',
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -793,7 +793,7 @@ class _LoginPageState extends State<LoginPage> {
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.06),
             blurRadius: 30,
-            offset: const Offset(0, 10),
+            offset: Offset(0, 10),
             spreadRadius: 2,
           ),
         ],
@@ -823,7 +823,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
                     Icon(Icons.tips_and_updates_rounded, color: AppColors.primary, size: 15),
                     SizedBox(width: 6),
@@ -852,12 +852,12 @@ class _LoginPageState extends State<LoginPage> {
                             BoxShadow(
                               color: AppColors.primary.withValues(alpha: 0.05),
                               blurRadius: 6,
-                              offset: const Offset(0, 2),
+                              offset: Offset(0, 2),
                             ),
                           ],
                           border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
                             Icon(Icons.face_rounded, color: AppColors.primary, size: 18),
                             SizedBox(width: 8),
@@ -901,12 +901,12 @@ class _LoginPageState extends State<LoginPage> {
                             BoxShadow(
                               color: AppColors.primary.withValues(alpha: 0.05),
                               blurRadius: 6,
-                              offset: const Offset(0, 2),
+                              offset: Offset(0, 2),
                             ),
                           ],
                           border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
                             Icon(Icons.school_rounded, color: AppColors.secondary, size: 18),
                             SizedBox(width: 8),
@@ -991,7 +991,7 @@ class _LoginPageState extends State<LoginPage> {
             height: 52,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 colors: [
                   AppColors.brand,
                   AppColors.brandDark,
@@ -1063,7 +1063,7 @@ class _LoginPageState extends State<LoginPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'Guru belum punya akun?',
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -1089,7 +1089,7 @@ class _LoginPageState extends State<LoginPage> {
             ],
           ),
           const SizedBox(height: 2),
-          const Text(
+          Text(
             'Orang Tua/Siswa silakan masuk menggunakan NIS',
             style: TextStyle(
               fontSize: 10.5,
@@ -1117,7 +1117,7 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
             color: AppColors.textDark,
@@ -1128,7 +1128,7 @@ class _LoginPageState extends State<LoginPage> {
           controller: controller,
           obscureText: isObscured,
           keyboardType: keyboardType,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13.5,
             color: AppColors.textDark,
@@ -1166,10 +1166,10 @@ class _LoginPageState extends State<LoginPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.8),
             ),
             hintText: hint,
-            hintStyle: const TextStyle(
+            hintStyle: TextStyle(
               color: AppColors.textMuted,
               fontWeight: FontWeight.normal,
               fontSize: 12.5,
@@ -1251,7 +1251,7 @@ class _CountdownDialogState extends State<_CountdownDialog> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   'Akses Ditangguhkan',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
@@ -1260,7 +1260,7 @@ class _CountdownDialogState extends State<_CountdownDialog> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
+                Text(
                   'Terlalu banyak percobaan login yang gagal.\nSilakan tunggu hingga waktu hitung mundur selesai.',
                   textAlign: TextAlign.center,
                   style: TextStyle(

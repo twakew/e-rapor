@@ -165,7 +165,7 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        child: Text('Konfirmasi sebagai $label', style: const TextStyle(fontWeight: FontWeight.bold)),
+        child: Text('Konfirmasi sebagai $label', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -189,7 +189,7 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
                     },
                   ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'Verifikasi Pendaftaran',
                   style: TextStyle(
                     fontSize: 26,

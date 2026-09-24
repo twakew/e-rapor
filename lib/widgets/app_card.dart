@@ -55,7 +55,7 @@ class AppInfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: isLast
           ? null
-          : const BoxDecoration(
+          : BoxDecoration(
               border: Border(bottom: BorderSide(color: AppColors.borderColor, width: 0.5)),
             ),
       child: Row(
@@ -65,14 +65,14 @@ class AppInfoRow extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               value.isEmpty ? '-' : value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.textDark,
                 fontSize: 13,
@@ -92,7 +92,7 @@ class AppBadge extends StatelessWidget {
   final Color color;
   final bool filled;
 
-  const AppBadge({
+  AppBadge({
     super.key,
     required this.text,
     this.color = AppColors.primary,
@@ -144,7 +144,7 @@ class AppPageHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textDark,
@@ -154,7 +154,7 @@ class AppPageHeader extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                   ),
@@ -173,14 +173,14 @@ class AppPageHeader extends StatelessWidget {
 class AppBackButton extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const AppBackButton({super.key, required this.onPressed});
+  AppBackButton({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
     return OutlinedButton.icon(
       onPressed: onPressed,
-      icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textDark),
-      label: const Text(
+      icon: Icon(Icons.arrow_back, size: 16, color: AppColors.textDark),
+      label: Text(
         'Kembali',
         style: TextStyle(
           color: AppColors.textDark,
@@ -191,8 +191,8 @@ class AppBackButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        side: const BorderSide(color: AppColors.borderColor),
-        backgroundColor: Colors.white,
+        side: BorderSide(color: AppColors.borderColor),
+        backgroundColor: AppColors.cardWhite,
       ),
     );
   }
@@ -218,7 +218,7 @@ class AppPrimaryButton extends StatelessWidget {
     return ElevatedButton.icon(
       onPressed: isLoading ? null : onPressed,
       icon: isLoading
-          ? const SizedBox(
+          ? SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),

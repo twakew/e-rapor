@@ -36,7 +36,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
   final Color primaryGreen = AppColors.primary;
   final Color darkNavy = AppColors.textDark;
   final Color textSecondary = const Color(0xFF64748B);
-  final Color textMuted = const Color(0xFF94A3B8);
+  final Color textMuted = Color(0xFF94A3B8);
   final Color bgLight = AppColors.backgroundColor;
   
   final Color colorBSB = const Color(0xFF10B981); // Emerald

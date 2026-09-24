@@ -374,7 +374,7 @@ class _TambahKelasPageState extends State<TambahKelasPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textDark)),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         TextFormField(
           controller: ctrl,
           decoration: InputDecoration(

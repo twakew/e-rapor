@@ -12,7 +12,7 @@ class DataKelasPage extends StatefulWidget {
   final bool isEmbedded;
   final Function(int, {Map<String, dynamic>? classData})? onNavigate;
 
-  const DataKelasPage({super.key, this.studentNis, this.studentClass, this.userRole, this.isEmbedded = false, this.onNavigate});
+  DataKelasPage({super.key, this.studentNis, this.studentClass, this.userRole, this.isEmbedded = false, this.onNavigate});
 
   @override
   State<DataKelasPage> createState() => _DataKelasPageState();
@@ -283,7 +283,7 @@ class _DataKelasPageState extends State<DataKelasPage> {
                     ),
                     child: Text(
                       '${_filteredData.length} dari ${_allData.length} data',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
                     ),
                   ),
                 ],
@@ -378,7 +378,7 @@ class _DataKelasPageState extends State<DataKelasPage> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       height: 42,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
       ),
