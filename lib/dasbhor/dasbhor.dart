@@ -440,9 +440,9 @@ class _DasbhorPageState extends State<DasbhorPage> {
                   height: 40,
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppColors.borderColor),
+                    color: AppColors.brandSoft,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.brandSofter),
                   ),
                   child: Image.asset('assets/logo_sekolah.png', fit: BoxFit.contain),
                 ),
@@ -535,74 +535,58 @@ class _DasbhorPageState extends State<DasbhorPage> {
     return Column(
       children: [
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          child: Stack(
-            children: [
-              if (isParentActive && !collapsed)
-                Positioned(
-                  left: -12,
-                  top: 8,
-                  bottom: 8,
-                  child: Container(
-                    width: 3,
-                    decoration: BoxDecoration(
-                      color: primaryDark,
-                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(2)),
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+          child: Material(
+            color: isParentActive ? AppColors.brandSoft : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              onTap: () {
+                if (hasDropdown && onExpand != null) {
+                  onExpand();
+                } else {
+                  _handleRestrictedAccess(label, index);
+                  if (MediaQuery.of(context).size.width < 1100) {
+                    Navigator.pop(context);
+                  }
+                }
+              },
+              hoverColor: AppColors.brandSofter.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: collapsed ? 0 : 12, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+                  children: [
+                    Icon(
+                      icon,
+                      color: isParentActive ? AppColors.brand : textSecondary,
+                      size: 20
                     ),
-                  ),
-                ),
-              Material(
-                color: isParentActive ? AppColors.accent : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-                child: InkWell(
-                  onTap: () {
-                    if (hasDropdown && onExpand != null) {
-                      onExpand();
-                    } else {
-                      _handleRestrictedAccess(label, index);
-                      if (MediaQuery.of(context).size.width < 1100) {
-                        Navigator.pop(context);
-                      }
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: collapsed ? 0 : 8, vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
-                      children: [
-                        Icon(
-                          icon,
-                          color: isParentActive ? primaryDark : textSecondary,
-                          size: 20
-                        ),
-                        if (!collapsed) ...[
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: isParentActive ? primaryDark : textSecondary,
-                                fontWeight: isParentActive ? FontWeight.w700 : FontWeight.w500,
-                                fontSize: 13,
-                              ),
-                            ),
+                    if (!collapsed) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isParentActive ? AppColors.brand : textSecondary,
+                            fontWeight: isParentActive ? FontWeight.w700 : FontWeight.w500,
+                            fontSize: 13,
                           ),
-                          if (hasDropdown)
-                            Icon(
-                              isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                              color: isParentActive ? primaryDark : textSecondary,
-                              size: 16
-                            ),
-                        ],
-                      ],
-                    ),
-                  ),
+                        ),
+                      ),
+                      if (hasDropdown)
+                        Icon(
+                          isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                          color: isParentActive ? AppColors.brand : textSecondary,
+                          size: 16
+                        ),
+                    ],
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
         if (hasDropdown && isExpanded && subItems != null && !collapsed)

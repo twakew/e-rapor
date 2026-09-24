@@ -10,6 +10,15 @@ class AppColors {
   static const Color brand = Color(0xFF4F46E5); // Indigo 600
   static const Color brandDark = Color(0xFF4338CA); // Indigo 700
 
+  // --- Brand Tints (state aktif, container M3) — satu sumber untuk pill/CTA lembut ---
+  static const Color brandSoft = Color(0xFFEEF2FF); // Indigo 50
+  static const Color brandSofter = Color(0xFFE0E7FF); // Indigo 100
+  static const LinearGradient brandGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [brand, brandDark],
+  );
+
   // --- Backgrounds ---
   static const Color backgroundColor = Color(0xFFFBFBFA); // Warm White
   static const Color cardWhite = Color(0xFFFFFFFF); // Pure White
@@ -52,9 +61,9 @@ class AppColors {
   // --- Ultra-Subtle Shadows ---
   static List<BoxShadow> get cardShadow => [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.02),
-      blurRadius: 8,
-      offset: const Offset(0, 2),
+      color: Colors.black.withValues(alpha: 0.035),
+      blurRadius: 12,
+      offset: const Offset(0, 3),
     ),
   ];
 
