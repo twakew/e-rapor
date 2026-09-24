@@ -327,7 +327,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.borderColor),
         boxShadow: AppColors.subtleShadow,
       ),
@@ -1010,10 +1010,10 @@ class _DasbhorPageState extends State<DasbhorPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeroSection(name, isDesktop),
-          const SizedBox(height: 32),
-          _buildChartSection(isMobile),
           const SizedBox(height: 24),
           _buildStatisticsSection(isDesktop),
+          const SizedBox(height: 24),
+          _buildChartSection(isMobile),
           const SizedBox(height: 40),
         ],
       ),
@@ -1022,40 +1022,81 @@ class _DasbhorPageState extends State<DasbhorPage> {
 
   Widget _buildStatisticsSection(bool isDesktop) {
     bool isMobile = MediaQuery.of(context).size.width < 600;
+    // Baris kartu statistik ala reference: angka besar + tile ikon semantic.
+    return GridView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isMobile ? 2 : 4,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: isMobile ? 1.7 : 2.4,
+      ),
+      children: [
+        _buildStatCard(Icons.groups_2_outlined, 'Total Siswa', _totalSiswa, AppColors.paleBlue, AppColors.paleBlueText),
+        _buildStatCard(Icons.badge_outlined, 'Total Guru', _totalGuru, AppColors.paleGreen, AppColors.paleGreenText),
+        _buildStatCard(Icons.meeting_room_outlined, 'Total Kelas', _totalKelas, AppColors.paleYellow, AppColors.paleYellowText),
+        _buildStatCard(Icons.collections_outlined, 'Dokumentasi', _totalDokumentasi, AppColors.paleRed, AppColors.paleRedText),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(IconData icon, String label, int value, Color bg, Color fg) {
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: isMobile ? 16 : 20, horizontal: 24),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderColor),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.paleBlue,
-              borderRadius: BorderRadius.circular(4),
+              color: bg,
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.campaign_rounded, color: AppColors.paleBlueText, size: 16),
+            child: Icon(icon, color: fg, size: 22),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
-            child: _RunningTextTicker(
-              text: "Selamat Datang di Sistem E-Rapor Digital TK-IT AL-HANIF LEDENG — Mewujudkan Generasi Cerdas, Kreatif, dan Berakhlak Mulia",
-              style: TextStyle(
-                fontSize: isMobile ? 12 : 13,
-                fontWeight: FontWeight.w600,
-                color: textDark,
-                letterSpacing: 0.2,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$value',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 20 : 24,
+                    fontWeight: FontWeight.w800,
+                    color: textDark,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+
+  bool get isSmallScreen => MediaQuery.of(context).size.width < 600;
 
 
   Widget _buildChartSection(bool isMobile) {
@@ -1108,10 +1149,10 @@ class _DasbhorPageState extends State<DasbhorPage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(4),
+                  color: AppColors.brandSoft,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.auto_graph_rounded, color: textSecondary, size: 16),
+                child: Icon(Icons.auto_graph_rounded, color: AppColors.brand, size: 16),
               ),
             ],
           ),
@@ -1305,6 +1346,24 @@ class _DasbhorPageState extends State<DasbhorPage> {
                     ],
                   ),
                 ),
+                if (!isMobile && _userRole != 'User')
+                  Expanded(
+                    flex: 2,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _handleRestrictedAccess('Tambah Siswa', 10),
+                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                        label: const Text('Tambah Siswa'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.brand,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1456,74 +1515,4 @@ class _DasbhorPageState extends State<DasbhorPage> {
   }
 }
 
-class _RunningTextTicker extends StatefulWidget {
-  final String text;
-  final TextStyle style;
-  const _RunningTextTicker({required this.text, required this.style});
-
-  @override
-  State<_RunningTextTicker> createState() => _RunningTextTickerState();
-}
-
-class _RunningTextTickerState extends State<_RunningTextTicker> {
-  late ScrollController _scrollController;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startScrolling());
-  }
-
-  void _startScrolling() async {
-    // Loop terus selama widget masih nampil
-    while (mounted) {
-      if (_scrollController.hasClients) {
-        double maxScroll = _scrollController.position.maxScrollExtent;
-        double currentScroll = _scrollController.offset;
-        
-        if (maxScroll > 0) {
-          // Hitung durasi berdasarkan jarak sisa agar kecepatan stabil (sekitar 50px/detik)
-          double remainingDistance = maxScroll - currentScroll;
-          int durationInMs = (remainingDistance / 50 * 1000).toInt();
-
-          if (durationInMs > 0) {
-            await _scrollController.animateTo(
-              maxScroll,
-              duration: Duration(milliseconds: durationInMs),
-              curve: Curves.linear, // Gerakan datar tanpa guncangan
-            );
-          }
-        }
-        
-        // Balik ke awal tanpa animasi (instant) lalu ulang lagi
-        if (mounted) {
-          _scrollController.jumpTo(0);
-        }
-      }
-      // Kasih nafas dikit sebelum loop selanjutnya
-      await Future.delayed(const Duration(milliseconds: 10));
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      controller: _scrollController,
-      scrollDirection: Axis.horizontal,
-      physics: const NeverScrollableScrollPhysics(),
-      child: Row(
-        children: [
-          Text(widget.text, style: widget.style),
-          Text(widget.text, style: widget.style),
-        ],
-      ),
-    );
-  }
-}
+// Teks berjalan (running text) dihapus — diganti baris kartu statistik.
