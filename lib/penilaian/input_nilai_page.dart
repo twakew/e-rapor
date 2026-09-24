@@ -181,7 +181,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
           constraints: BoxConstraints(maxWidth: _isMobile ? double.infinity : 400),
           margin: EdgeInsets.all(_isMobile ? 0 : 24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.cardWhite,
             borderRadius: _isMobile 
               ? const BorderRadius.vertical(top: Radius.circular(32))
               : BorderRadius.circular(28),
@@ -392,7 +392,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
       backgroundColor: bgLight,
       appBar: _isMobile ? AppBar(
         title: const Text('Input Penilaian', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.cardWhite,
         foregroundColor: darkNavy,
         elevation: 0,
         actions: [
@@ -587,7 +587,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.cardWhite,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: active ? primaryGreen : const Color(0xFFE2E8F0)),
           ),
@@ -614,7 +614,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
     List<Map<String, dynamic>> list = _getAspectsForActiveTab();
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
@@ -789,7 +789,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
     return Container(
       padding: _isMobile ? EdgeInsets.zero : const EdgeInsets.all(32),
       decoration: _isMobile ? null : BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
@@ -1033,7 +1033,7 @@ class _InputNilaiPageState extends State<InputNilaiPage> with SingleTickerProvid
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.cardWhite,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),

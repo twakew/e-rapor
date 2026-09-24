@@ -248,7 +248,7 @@ class _TambahKelasPageState extends State<TambahKelasPage> {
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardWhite,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: borderColor),
                   boxShadow: AppColors.cardShadow,

@@ -407,7 +407,7 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide(color: isDanger ? errorRed.withValues(alpha: 0.5) : borderColor),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.cardWhite,
       ),
     );
   }
@@ -421,7 +421,7 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: borderColor),
         boxShadow: [
@@ -758,7 +758,7 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor.withValues(alpha: 0.8)),
         boxShadow: [

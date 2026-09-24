@@ -208,7 +208,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             side: BorderSide(color: borderColor),
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.cardWhite,
           ),
         ),
       ],
@@ -223,7 +223,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor),
           boxShadow: AppColors.cardShadow,
@@ -326,7 +326,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
         boxShadow: AppColors.cardShadow,
@@ -512,7 +512,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: borderColor),
         ),
@@ -619,7 +619,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardWhite,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.grey.shade200),
                 ),
@@ -635,7 +635,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
                         version: QrVersions.auto,
                         size: 200.0,
                         gapless: false,
-                        backgroundColor: Colors.white,
+                        backgroundColor: AppColors.cardWhite,
                         // Gunakan warna hitam default dulu agar pasti muncul
                         eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Colors.black),
                         dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Colors.black),
@@ -869,7 +869,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
     return Container(
       padding: const EdgeInsets.all(16), // Further reduced padding
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
       ),
@@ -1013,7 +1013,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
     return Container(
       padding: const EdgeInsets.all(16), // Reduced padding
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
       ),
@@ -1044,7 +1044,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withValues(alpha: 0.1)),
         ),

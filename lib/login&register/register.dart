@@ -368,7 +368,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.cardWhite,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
@@ -541,7 +541,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(

@@ -150,7 +150,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide(color: borderColor),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.cardWhite,
       ),
     );
   }
@@ -166,7 +166,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor),
           boxShadow: AppColors.cardShadow,
@@ -236,7 +236,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
         boxShadow: AppColors.cardShadow,
@@ -557,7 +557,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
       ),

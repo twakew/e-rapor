@@ -122,7 +122,7 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               side: BorderSide(color: borderColor),
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.cardWhite,
             ),
           ),
         ],
@@ -166,7 +166,7 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
     return Container(
       padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppColors.cardShadow,
         border: Border.all(color: borderColor.withValues(alpha: 0.5)),
@@ -223,7 +223,7 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
   Widget _buildStudentListCard(bool isMobile, String batch) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(24),
         boxShadow: AppColors.cardShadow,
         border: Border.all(color: borderColor),

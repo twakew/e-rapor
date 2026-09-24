@@ -154,7 +154,7 @@ class _DokumentasiPageState extends State<DokumentasiPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white, 
+                color: AppColors.cardWhite, 
                 borderRadius: BorderRadius.circular(12), 
                 border: Border.all(color: borderColor)
               ),
@@ -206,7 +206,7 @@ class _DokumentasiPageState extends State<DokumentasiPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white, 
+              color: AppColors.cardWhite, 
               borderRadius: BorderRadius.circular(12), 
               border: Border.all(color: borderColor)
             ),

@@ -1037,8 +1037,8 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                   child: ExpansionTile(
                     shape: const Border(),
                     collapsedShape: const Border(),
-                    backgroundColor: Colors.white,
-                    collapsedBackgroundColor: Colors.white,
+                    backgroundColor: AppColors.cardWhite,
+                    collapsedBackgroundColor: AppColors.cardWhite,
                     iconColor: primaryTeal,
                     tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     leading: Container(
@@ -1386,7 +1386,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.cardWhite,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey.shade200),
               ),
@@ -1416,7 +1416,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.cardWhite,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey.shade200),
               ),
@@ -1489,8 +1489,8 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         ),
         child: StatefulBuilder(
@@ -1729,7 +1729,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -1868,7 +1868,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white, 
+        color: AppColors.cardWhite, 
         borderRadius: BorderRadius.circular(20), 
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 5)]
       ),
@@ -1926,7 +1926,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -2004,7 +2004,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
       return Container(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardWhite,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           boxShadow: [
             BoxShadow(

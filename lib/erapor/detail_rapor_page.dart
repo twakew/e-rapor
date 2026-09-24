@@ -206,7 +206,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
       backgroundColor: bgLight,
       appBar: AppBar(
         title: Text('Detail Rapor', style: TextStyle(fontWeight: FontWeight.bold, color: darkNavy, fontSize: 18)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.cardWhite,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: darkNavy, size: 20),
@@ -291,7 +291,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
@@ -380,7 +380,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
@@ -436,7 +436,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.cardWhite,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
@@ -464,7 +464,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),

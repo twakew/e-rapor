@@ -72,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
           builder: (_, setDialogState) => Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             elevation: 10,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.cardWhite,
             child: Container(
               constraints: const BoxConstraints(maxWidth: 420),
               padding: const EdgeInsets.all(28.0),
@@ -787,7 +787,7 @@ class _LoginPageState extends State<LoginPage> {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
@@ -846,7 +846,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.cardWhite,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
@@ -895,7 +895,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.cardWhite,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
@@ -1230,7 +1230,7 @@ class _CountdownDialogState extends State<_CountdownDialog> {
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         elevation: 12,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.cardWhite,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 400),
           padding: const EdgeInsets.all(28.0),

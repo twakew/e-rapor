@@ -303,7 +303,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide(color: borderColor),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.cardWhite,
       ),
     );
   }
@@ -317,7 +317,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
       ),
@@ -599,7 +599,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
         boxShadow: AppColors.cardShadow,
@@ -836,7 +836,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
         padding: const EdgeInsets.symmetric(vertical: 14), // Padding diperkecil
         side: BorderSide(color: borderColor),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), // Radius diperkecil
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.cardWhite,
       ),
     );
   }

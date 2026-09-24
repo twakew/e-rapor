@@ -278,7 +278,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               side: BorderSide(color: borderColor),
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.cardWhite,
             ),
           ),
         ],
@@ -290,7 +290,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: borderColor),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 4))],
@@ -401,7 +401,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(16),
           boxShadow: AppColors.cardShadow,
         ),
@@ -437,7 +437,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
   Widget _buildStudentListCard() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
       ),

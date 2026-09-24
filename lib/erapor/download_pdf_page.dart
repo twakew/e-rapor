@@ -356,8 +356,8 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
           if (!rombels.contains(_pbRombel)) _pbRombel = 'Semua';
 
           return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: AppColors.cardWhite,
               borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
             padding: const EdgeInsets.all(24),
@@ -484,8 +484,8 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
           final filteredCount = tempForRombel.where((s) => _dlRombel == 'Semua' || s['rombel'] == _dlRombel).length;
 
           return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: AppColors.cardWhite,
               borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
             padding: const EdgeInsets.all(24),

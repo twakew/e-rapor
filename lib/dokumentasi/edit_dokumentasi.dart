@@ -141,7 +141,7 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
                   constraints: const BoxConstraints(maxWidth: 800),
                   padding: EdgeInsets.all(_isMobile ? 20 : 40),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.cardWhite,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: borderColor),
                     boxShadow: [
@@ -342,7 +342,7 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
             hintStyle: TextStyle(color: textMuted, fontSize: 14),
             prefixIcon: Icon(icon, color: primaryBlue, size: 20),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.backgroundColor,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

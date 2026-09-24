@@ -161,7 +161,7 @@ class _PanduanPageState extends State<PanduanPage> {
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: borderColor),
         boxShadow: [
@@ -205,8 +205,8 @@ class _PanduanPageState extends State<PanduanPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.8,
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.cardWhite,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         padding: const EdgeInsets.all(40),

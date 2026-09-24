@@ -269,7 +269,7 @@ class _PengaturanPageState extends State<PengaturanPage> {
   Widget _buildSettingsCard(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

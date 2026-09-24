@@ -289,7 +289,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -352,7 +352,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
           hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
           prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 20),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.backgroundColor,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -399,7 +399,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     return Container(
       margin: const EdgeInsets.only(top: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: AppColors.cardShadow,
