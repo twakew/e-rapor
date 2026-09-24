@@ -167,6 +167,20 @@ class _PenilaianPageState extends State<PenilaianPage> {
               color: darkNavy,
             ),
           ),
+          if (!_isMobile) ...[
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.paleBlue,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '${_filteredStudents.length} dari ${_students.length} siswa',
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -202,15 +216,10 @@ class _PenilaianPageState extends State<PenilaianPage> {
     return Container(
       padding: EdgeInsets.all(_isMobile ? 12 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          )
-        ],
+        border: Border.all(color: AppColors.borderColor),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         children: [
@@ -313,7 +322,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         side: BorderSide(color: Colors.grey.shade100),
         backgroundColor: AppColors.backgroundColor,
       ),
@@ -363,17 +372,62 @@ class _PenilaianPageState extends State<PenilaianPage> {
   Widget _buildFlatTable() {
     if (_filteredStudents.isEmpty) return _buildEmptyState();
 
-    return Column(
-      children: [
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _filteredStudents.length,
-          itemBuilder: (context, index) {
-            return _flatStudentRow(_filteredStudents[index]);
-          },
+    if (_isMobile) {
+      return Column(
+        children: [
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _filteredStudents.length,
+            itemBuilder: (context, index) {
+              return _flatStudentRow(_filteredStudents[index]);
+            },
+          ),
+        ],
+      );
+    }
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderColor),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        children: [
+          _buildTableHeader(),
+          for (final s in _filteredStudents) _flatStudentRow(s),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableHeader() {
+    Widget head(String label, {double? width, bool right = false}) {
+      return SizedBox(
+        width: width,
+        child: Text(
+          label,
+          textAlign: right ? TextAlign.right : TextAlign.left,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6),
         ),
-      ],
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      color: AppColors.backgroundColor,
+      child: Row(
+        children: [
+          Expanded(child: head('SISWA')),
+          const SizedBox(width: 24),
+          head('PROGRES', width: 150),
+          const SizedBox(width: 16),
+          head('STATUS', width: 70),
+          head('', width: 90, right: true),
+        ],
+      ),
     );
   }
 
@@ -387,28 +441,36 @@ class _PenilaianPageState extends State<PenilaianPage> {
     double prog = (s1 > s2 ? s1 : s2) / totalCategories;
     if (prog > 1.0) prog = 1.0;
 
+    final bool desktop = !_isMobile;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: desktop ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isDone ? const Color(0xFFF0FDF4) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          )
-        ],
-        border: Border.all(color: isDone ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9), width: 1.2),
+        color: isDone ? const Color(0xFFF0FDF4) : AppColors.cardWhite,
+        borderRadius: desktop ? BorderRadius.zero : BorderRadius.circular(20),
+        boxShadow: desktop
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                )
+              ],
+        border: desktop
+            ? const Border(bottom: BorderSide(color: AppColors.borderColor))
+            : Border.all(color: isDone ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9), width: 1.2),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: desktop ? BorderRadius.zero : BorderRadius.circular(20),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {}, 
+            hoverColor: desktop ? AppColors.brandSoft.withValues(alpha: 0.6) : null,
+            onTap: () {},
             child: Padding(
-              padding: EdgeInsets.all(_isMobile ? 16 : 14),
+              padding: desktop
+                  ? const EdgeInsets.symmetric(horizontal: 20, vertical: 14)
+                  : EdgeInsets.all(_isMobile ? 16 : 14),
               child: Row(
                 children: [
                   // --- AVATAR & NAME (Primary Info) ---
