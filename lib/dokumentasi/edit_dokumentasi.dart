@@ -6,6 +6,7 @@ import 'package:image/image.dart' as img;
 import 'dart:io';
 import 'dart:typed_data';
 import '../utils/notification_helper.dart';
+import '../utils/media_helper.dart';
 
 class EditDokumentasiPage extends StatefulWidget {
   final dynamic dokumentasi;
@@ -44,7 +45,8 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
 
   Future<void> _pickImage() async {
     final result = await FilePicker.pickFiles(
-      type: FileType.image,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'mov', 'webm', 'm4v'],
     );
 
     if (result != null) {
@@ -89,11 +91,16 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
 
       if (_pickedFile != null) {
         final file = File(_pickedFile!.path!);
-        final compressedBytes = await _compressImage(file);
-        // Upload via backend storage
-        imageUrl = await apiService.uploadFile('dokumentasi', compressedBytes != null
-            ? (await _saveTempFile(compressedBytes))
-            : file);
+        if (isVideoName(_pickedFile!.name)) {
+          // Video diupload apa adanya (tanpa kompresi gambar).
+          imageUrl = await apiService.uploadFile('dokumentasi', file);
+        } else {
+          final compressedBytes = await _compressImage(file);
+          // Upload via backend storage
+          imageUrl = await apiService.uploadFile('dokumentasi', compressedBytes != null
+              ? (await _saveTempFile(compressedBytes))
+              : file);
+        }
         // Old image deletion is handled server-side or ignored for now
       }
 
@@ -146,7 +153,7 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Foto Dokumentasi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkNavy)),
+                        Text('Foto / Video Dokumentasi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkNavy)),
                         const SizedBox(height: 16),
                         _buildImagePicker(),
                         const SizedBox(height: 32),
@@ -233,6 +240,7 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
   }
 
   Widget _buildImagePicker() {
+    final existingUrl = (widget.dokumentasi['image_url'] ?? '').toString();
     return GestureDetector(
       onTap: _pickImage,
       child: Container(
@@ -246,18 +254,68 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: _pickedFile != null
-              ? Image.file(File(_pickedFile!.path!), fit: BoxFit.cover)
-              : widget.dokumentasi['image_url'] != null
-                  ? Image.network(widget.dokumentasi['image_url'], fit: BoxFit.cover)
+              ? (isVideoName(_pickedFile!.name)
+                  ? _buildVideoPreview()
+                  : Image.file(File(_pickedFile!.path!), fit: BoxFit.cover))
+              : existingUrl.isNotEmpty
+                  ? (isVideoUrl(existingUrl)
+                      ? _buildExistingVideoBadge()
+                      : Image.network(
+                          existingUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(Icons.broken_image_outlined, size: 48, color: textMuted),
+                        ))
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.add_photo_alternate_outlined, size: _isMobile ? 32 : 48, color: textMuted),
                         const SizedBox(height: 12),
-                        Text('Ketuk untuk mengubah foto', style: TextStyle(color: textSecondary, fontSize: _isMobile ? 12 : 14)),
+                        Text('Ketuk untuk mengubah foto/video', style: TextStyle(color: textSecondary, fontSize: _isMobile ? 12 : 14)),
                       ],
                     ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildVideoPreview() {
+    return Container(
+      color: Colors.black,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.play_circle_fill_rounded, size: 64, color: Colors.white),
+          const SizedBox(height: 12),
+          Text(
+            _pickedFile!.name,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${(_pickedFile!.size / (1024 * 1024)).toStringAsFixed(1)} MB',
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExistingVideoBadge() {
+    return Container(
+      color: Colors.black,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.play_circle_fill_rounded, size: 64, color: Colors.white),
+          const SizedBox(height: 12),
+          const Text('Video saat ini', style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 4),
+          Text('Ketuk untuk mengganti', style: TextStyle(color: textMuted, fontSize: 11)),
+        ],
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import '../utils/notification_helper.dart';
 import '../utils/push_notification_service.dart';
+import '../utils/media_helper.dart';
 
 class TambahDokumentasiPage extends StatefulWidget {
   final Function(int)? onNavigate;
@@ -37,7 +38,8 @@ class _TambahDokumentasiPageState extends State<TambahDokumentasiPage> {
 
   Future<void> _pickImage() async {
     final result = await FilePicker.pickFiles(
-      type: FileType.image,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'mov', 'webm', 'm4v'],
     );
 
     if (result != null) {
@@ -75,21 +77,26 @@ class _TambahDokumentasiPageState extends State<TambahDokumentasiPage> {
   Future<void> _saveDokumentasi() async {
     if (!_formKey.currentState!.validate()) return;
     if (_pickedFile == null) {
-      NotificationHelper.show(context, 'Pilih foto kegiatan terlebih dahulu', isError: true);
+      NotificationHelper.show(context, 'Pilih foto atau video kegiatan terlebih dahulu', isError: true);
       return;
     }
-    
+
     setState(() => _isLoading = true);
 
     try {
       String? imageUrl;
 
       final file = File(_pickedFile!.path!);
-      final compressedBytes = await _compressImage(file);
-      // Upload via backend storage
-      imageUrl = await apiService.uploadFile('dokumentasi', compressedBytes != null
-          ? (await _saveTempFile(compressedBytes))
-          : file);
+      if (isVideoName(_pickedFile!.name)) {
+        // Video diupload apa adanya (tanpa kompresi gambar).
+        imageUrl = await apiService.uploadFile('dokumentasi', file);
+      } else {
+        final compressedBytes = await _compressImage(file);
+        // Upload via backend storage
+        imageUrl = await apiService.uploadFile('dokumentasi', compressedBytes != null
+            ? (await _saveTempFile(compressedBytes))
+            : file);
+      }
 
       await apiService.insert('documentation', {
         'title': _titleController.text,
@@ -156,7 +163,7 @@ class _TambahDokumentasiPageState extends State<TambahDokumentasiPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Foto Dokumentasi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkNavy)),
+                        Text('Foto / Video Dokumentasi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkNavy)),
                         const SizedBox(height: 16),
                         _buildImagePicker(),
                         const SizedBox(height: 32),
@@ -251,18 +258,45 @@ class _TambahDokumentasiPageState extends State<TambahDokumentasiPage> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: _pickedFile != null
-              ? Image.file(File(_pickedFile!.path!), fit: BoxFit.cover)
+              ? (isVideoName(_pickedFile!.name)
+                  ? _buildVideoPreview()
+                  : Image.file(File(_pickedFile!.path!), fit: BoxFit.cover))
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.add_photo_alternate_outlined, size: _isMobile ? 32 : 48, color: textMuted),
                     const SizedBox(height: 12),
-                    Text('Ketuk untuk memilih foto kegiatan', style: TextStyle(color: textSecondary, fontSize: _isMobile ? 12 : 14)),
+                    Text('Ketuk untuk memilih foto atau video kegiatan', style: TextStyle(color: textSecondary, fontSize: _isMobile ? 12 : 14)),
                     const SizedBox(height: 4),
-                    Text('Format: JPG, PNG (Maks 5MB)', style: TextStyle(color: textMuted, fontSize: _isMobile ? 10 : 12)),
+                    Text('Format: JPG, PNG, MP4, MOV, WEBM (Maks 100MB)', style: TextStyle(color: textMuted, fontSize: _isMobile ? 10 : 12)),
                   ],
                 ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildVideoPreview() {
+    return Container(
+      color: Colors.black,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.play_circle_fill_rounded, size: 64, color: Colors.white),
+          const SizedBox(height: 12),
+          Text(
+            _pickedFile!.name,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${(_pickedFile!.size / (1024 * 1024)).toStringAsFixed(1)} MB',
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+        ],
       ),
     );
   }

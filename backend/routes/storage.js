@@ -20,10 +20,12 @@ const storage = multer.diskStorage({
   }
 });
 
-const ALLOWED_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.pdf', '.xlsx', '.xls', '.docx'];
+const ALLOWED_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.pdf', '.xlsx', '.xls', '.docx', '.mp4', '.mov', '.webm', '.m4v'];
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  // ponytail: limit seragam 100 MB; kalau perlu beda limit foto vs video,
+  // pindah ke dua endpoint / hitung via fileFilter + streaming check.
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
   fileFilter: function (req, file, cb) {
     const ext = path.extname(file.originalname || '').toLowerCase();
     cb(null, ALLOWED_EXT.includes(ext));

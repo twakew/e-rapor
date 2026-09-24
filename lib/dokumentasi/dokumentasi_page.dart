@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:laporsekolaherapor/config/app_colors.dart';
 import '../utils/notification_helper.dart';
+import '../utils/media_helper.dart';
 
 class DokumentasiPage extends StatefulWidget {
   final Function(int, {dynamic documentation})? onNavigate;
@@ -281,6 +283,9 @@ class _DokumentasiPageState extends State<DokumentasiPage> {
 
   Widget _buildDokumentasiCard(dynamic item) {
     final bool isAdmin = _userRole == 'Admin' || _userRole == 'Guru' || _userRole == 'Super Admin';
+    final String imageUrl = (item['image_url'] ?? '').toString();
+    final String firstMedia = imageUrl.split(',').where((s) => s.trim().isNotEmpty).firstOrNull?.trim() ?? '';
+    final bool isVideo = firstMedia.isNotEmpty && isVideoUrl(firstMedia);
 
     return GestureDetector(
       onTap: () {
@@ -305,14 +310,26 @@ class _DokumentasiPageState extends State<DokumentasiPage> {
               // 1. Fotonya (Full Card)
               Hero(
                 tag: 'image_${item['id']}',
-                child: Image.network(
-                  item['image_url'],
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[200],
-                    child: Icon(Icons.broken_image_outlined, size: 32, color: textMuted),
-                  ),
-                ),
+                child: isVideo
+                    ? Container(
+                        color: Colors.grey[900],
+                        child: const Center(
+                          child: Icon(Icons.play_circle_fill_rounded, size: 56, color: Colors.white70),
+                        ),
+                      )
+                    : imageUrl.isEmpty
+                    ? Container(
+                        color: Colors.grey[200],
+                        child: Icon(Icons.image_outlined, size: 48, color: textMuted),
+                      )
+                    : Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[200],
+                          child: Icon(Icons.broken_image_outlined, size: 32, color: textMuted),
+                        ),
+                      ),
               ),
               
               // 2. Gradient Overlay
@@ -477,10 +494,27 @@ class _DokumentasiPageState extends State<DokumentasiPage> {
           }
         }
 
-        await apiService.delete('documentation', id.toString());
+        try {
+          await apiService.delete('documentation', id.toString());
+        } on DioException catch (e) {
+          // 404 = baris sudah terhapus (klik ganda / tab lain) -> sukses.
+          if (e.response?.statusCode != 404) rethrow;
+        }
+        // Hilangkan dari list langsung, jangan nunggu poll 15 detik.
+        _dokumentasiList.removeWhere((d) => d['id'].toString() == id.toString());
+        _filterData();
         if (mounted) NotificationHelper.show(context, 'Dokumentasi berhasil dihapus');
       } catch (e) {
-        if (mounted) NotificationHelper.show(context, 'Gagal menghapus: $e', isError: true);
+        String msg = 'Gagal menghapus';
+        if (e is DioException) {
+          final data = e.response?.data;
+          if (data is Map && data['error'] != null) {
+            msg = data['error'].toString();
+          } else if (e.response?.statusCode != null) {
+            msg = 'Gagal menghapus (HTTP ${e.response!.statusCode})';
+          }
+        }
+        if (mounted) NotificationHelper.show(context, msg, isError: true);
       }
     }
   }

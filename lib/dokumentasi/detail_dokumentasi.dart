@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'dart:ui';
 import 'package:path_provider/path_provider.dart';
+import 'package:video_player/video_player.dart';
 import '../utils/notification_helper.dart';
+import '../utils/media_helper.dart';
 
 class DetailDokumentasiPage extends StatefulWidget {
   final dynamic dokumentasi;
@@ -20,33 +22,72 @@ class _DetailDokumentasiPageState extends State<DetailDokumentasiPage> {
   late List<String> _images;
   bool _isDownloading = false;
   bool _showInfo = true;
+  VideoPlayerController? _vc;
 
   @override
   void initState() {
     super.initState();
     final imageUrl = widget.dokumentasi['image_url'] as String? ?? '';
     _images = imageUrl.split(',').where((s) => s.trim().isNotEmpty).toList();
+    // ponytail: mode video hanya untuk item tunggal; kalau nanti gallery
+    // campur foto+video, pisah jadi list media bertipe.
+    if (_images.isNotEmpty && isVideoUrl(_images.first)) {
+      _vc = VideoPlayerController.networkUrl(Uri.parse(_images.first.trim()));
+      _vc!.initialize().then((_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _vc?.dispose();
+    super.dispose();
   }
 
   Future<void> _downloadImage() async {
     if (_isDownloading) return;
-    
+    if (_images.isEmpty) {
+      if (mounted) NotificationHelper.show(context, 'Tidak ada foto untuk diunduh', isError: true);
+      return;
+    }
+
     setState(() => _isDownloading = true);
-    
+
     try {
-      final String url = _images[_currentPage].trim();
+      final bool isVideo = _vc != null;
+      final String url = (isVideo ? _images.first : _images[_currentPage]).trim();
       final response = await http.get(Uri.parse(url));
-      
-      if (response.statusCode == 200) {
-        final tempDir = await getTemporaryDirectory();
-        final path = '${tempDir.path}/downloaded_image_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final file = File(path);
-        await file.writeAsBytes(response.bodyBytes);
-        
-        await Gal.putImage(path);
-        if (mounted) NotificationHelper.show(context, 'Gambar berhasil disimpan ke galeri');
+      if (response.statusCode != 200) throw Exception('Gagal mengunduh file');
+
+      final uri = Uri.parse(url);
+      final lastSeg = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+      final String ext = lastSeg.contains('.')
+          ? lastSeg.split('.').last
+          : (isVideo ? 'mp4' : 'jpg');
+
+      final tempDir = await getTemporaryDirectory();
+      final path = '${tempDir.path}/downloaded_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final file = File(path);
+      await file.writeAsBytes(response.bodyBytes);
+
+      String savedMsg;
+      if (Platform.isWindows || Platform.isLinux) {
+        // Gal (galeri) cuma Android/iOS/macOS -> desktop simpan ke Downloads.
+        final downloads = await getDownloadsDirectory();
+        if (downloads == null) throw Exception('Folder Downloads tidak ditemukan');
+        final dest = File('${downloads.path}/${path.split('/').last}');
+        await file.copy(dest.path);
+        savedMsg = 'Tersimpan di ${dest.path}';
+      } else if (isVideo) {
+        await Gal.putVideo(path);
+        savedMsg = 'Berhasil disimpan ke galeri';
       } else {
-        throw Exception('Gagal mengunduh gambar');
+        await Gal.putImage(path);
+        savedMsg = 'Berhasil disimpan ke galeri';
+      }
+      if (mounted) {
+        NotificationHelper.show(context, "${isVideo ? 'Video' : 'Gambar'}: $savedMsg");
       }
     } catch (e) {
       if (mounted) NotificationHelper.show(context, 'Gagal mengunduh: $e', isError: true);
@@ -79,7 +120,11 @@ class _DetailDokumentasiPageState extends State<DetailDokumentasiPage> {
           // 1. Full Image Gallery
           GestureDetector(
             onTap: () => setState(() => _showInfo = !_showInfo),
-            child: PageView.builder(
+            child: _vc != null
+                ? _buildVideoPlayer()
+                : _images.isEmpty
+                    ? const Center(child: Icon(Icons.image_not_supported_outlined, size: 80, color: Colors.white24))
+                    : PageView.builder(
               onPageChanged: (index) => setState(() => _currentPage = index),
               itemCount: _images.length,
               itemBuilder: (context, index) {
@@ -114,9 +159,10 @@ class _DetailDokumentasiPageState extends State<DetailDokumentasiPage> {
             right: 20,
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 300),
-              opacity: _showInfo ? 1.0 : 0.0,
+              // Mode video: header (Kembali/Unduh) selalu tampil.
+              opacity: (_showInfo || _vc != null) ? 1.0 : 0.0,
               child: IgnorePointer(
-                ignoring: !_showInfo,
+                ignoring: !(_showInfo || _vc != null),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -132,7 +178,7 @@ class _DetailDokumentasiPageState extends State<DetailDokumentasiPage> {
                     ),
                     Row(
                       children: [
-                        if (_images.length > 1)
+                        if (_vc == null && _images.length > 1)
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: BackdropFilter(
@@ -165,7 +211,8 @@ class _DetailDokumentasiPageState extends State<DetailDokumentasiPage> {
           ),
 
           // 3. Info Panel - Glassmorphism Effect
-          Positioned(
+          if (_vc == null)
+            Positioned(
             bottom: 24,
             left: 16,
             right: 16,
@@ -244,6 +291,56 @@ class _DetailDokumentasiPageState extends State<DetailDokumentasiPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildVideoPlayer() {
+    final vc = _vc!;
+    return GestureDetector(
+      onTap: () => vc.value.isPlaying ? vc.pause() : vc.play(),
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: vc.value.isInitialized && vc.value.aspectRatio > 0 ? vc.value.aspectRatio : 16 / 9,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              VideoPlayer(vc),
+              ValueListenableBuilder<VideoPlayerValue>(
+                valueListenable: vc,
+                builder: (context, value, _) {
+                  return IgnorePointer(
+                    ignoring: !value.isInitialized || value.isPlaying,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: value.isPlaying ? 0.0 : 1.0,
+                      child: const Icon(Icons.play_circle_fill_rounded, size: 72, color: Colors.white70),
+                    ),
+                  );
+                },
+              ),
+              Positioned(
+                left: 12,
+                right: 12,
+                bottom: 8,
+                child: ValueListenableBuilder<VideoPlayerValue>(
+                  valueListenable: vc,
+                  builder: (context, value, _) {
+                    final maxMs = value.duration.inMilliseconds <= 0
+                        ? 1
+                        : value.duration.inMilliseconds;
+                    final pos = value.position.inMilliseconds.clamp(0, maxMs);
+                    return Slider(
+                      value: pos.toDouble(),
+                      max: maxMs.toDouble(),
+                      onChanged: (v) => vc.seekTo(Duration(milliseconds: v.round())),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
