@@ -329,7 +329,7 @@ class _PengaturanPageState extends State<PengaturanPage> {
       height: 1,
       indent: 68,
       endIndent: 16,
-      color: Colors.grey.shade100,
+      color: AppColors.textMuted,
     );
   }
 

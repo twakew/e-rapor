@@ -37,7 +37,7 @@ class _ProfilPageState extends State<ProfilPage> {
   String? _role;
 
   // --- Color Palette ---
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color secondaryTeal = AppColors.secondary;
   final Color accentGreen = AppColors.accent;
   final Color backgroundColor = AppColors.backgroundColor;
@@ -289,9 +289,9 @@ class _ProfilPageState extends State<ProfilPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
+                    color: AppColors.paleGreen,
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: const Color(0xFFBBF7D0)),
+                    border: Border.all(color: AppColors.paleGreen),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -333,7 +333,7 @@ class _ProfilPageState extends State<ProfilPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: AppColors.borderColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
@@ -415,7 +415,7 @@ class _ProfilPageState extends State<ProfilPage> {
           Text(value, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textDark),
               textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 9, color: Color(0xFF94A3B8))),
+          Text(label, style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
         ],
       ),
     );
@@ -519,6 +519,6 @@ class _DividerLight extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(height: 1, color: Color(0xFFF1F5F9));
+    return Divider(height: 1, color: AppColors.borderColor);
   }
 }

@@ -27,7 +27,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
   late TabController _tabController;
 
   // --- Color Palette ---
-  final Color primaryTeal = AppColors.primary; 
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary; 
   final Color backgroundColor = AppColors.backgroundColor;
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
@@ -181,7 +181,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
                   width: 80,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: AppColors.borderColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: borderColor),
                   ),
@@ -254,7 +254,7 @@ class _DetailGuruPageState extends State<DetailGuruPage> with SingleTickerProvid
                   width: 90,
                   height: 110,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: AppColors.borderColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: borderColor),
                   ),

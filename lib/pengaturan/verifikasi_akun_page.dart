@@ -240,11 +240,11 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Semua akun pendaftar telah diverifikasi.',
             style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF94A3B8),
+              color: AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 80), // Offset biar gak terlalu ke tengah banget
@@ -292,7 +292,7 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
               const SizedBox(height: 4),
               Text(
                 'Mendaftar: ${userData['created_at'] != null ? DateTime.parse(userData['created_at']).toLocal().toString().split(' ')[0] : '-'}',
-                style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
             ],
           ),

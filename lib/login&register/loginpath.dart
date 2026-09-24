@@ -119,7 +119,7 @@ class _LoginPageState extends State<LoginPage> {
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            side: BorderSide(color: Colors.grey.shade300),
+                            side: BorderSide(color: AppColors.borderColor),
                             foregroundColor: AppColors.textSecondary,
                           ),
                           child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600)),

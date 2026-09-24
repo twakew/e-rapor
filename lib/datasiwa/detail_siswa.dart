@@ -34,7 +34,7 @@ class DetailSiswaPage extends StatefulWidget {
 
 class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProviderStateMixin {
   // --- Color Palette ---
-  final Color primaryTeal = AppColors.primary; 
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary; 
   final Color backgroundColor = AppColors.backgroundColor;
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
@@ -240,7 +240,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
-                        color: const Color(0xFFF1F5F9),
+                        color: AppColors.borderColor,
                       ),
                       child: Center(
                         child: Text(
@@ -343,7 +343,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
-                  color: const Color(0xFFF1F5F9),
+                  color: AppColors.borderColor,
                 ),
                 child: Center(
                   child: Text(
@@ -430,7 +430,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
       decoration: BoxDecoration(
         color: AppColors.backgroundColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -448,7 +448,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+        color: isActive ? AppColors.paleGreen : AppColors.surfaceGray,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -621,7 +621,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
                 decoration: BoxDecoration(
                   color: AppColors.cardWhite,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: AppColors.borderColor),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -922,7 +922,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
         decoration: BoxDecoration(
           color: AppColors.backgroundColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFF1F5F9)),
+          border: Border.all(color: AppColors.borderColor),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -945,7 +945,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
                   if (isBadge) 
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(20)),
+                      decoration: BoxDecoration(color: AppColors.paleGreen, borderRadius: BorderRadius.circular(20)),
                       child: Text(value?.toString() ?? '-', style: TextStyle(color: AppColors.successGreen, fontSize: 11, fontWeight: FontWeight.bold)),
                     )
                   else if (isTeacher)
@@ -976,7 +976,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
             width: 140,
             child: Text(label, style: TextStyle(fontSize: 13, color: textSecondary)),
           ),
-          const Text(':', style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8))),
+          Text(':', style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
           const SizedBox(width: 16),
           Expanded(
             child: isBadge 
@@ -984,7 +984,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
                     alignment: Alignment.centerLeft,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(20)),
+                      decoration: BoxDecoration(color: AppColors.paleGreen, borderRadius: BorderRadius.circular(20)),
                       child: Text(value?.toString() ?? '-', style: TextStyle(color: AppColors.successGreen, fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   )

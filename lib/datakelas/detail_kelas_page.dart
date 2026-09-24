@@ -476,7 +476,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
                         decoration: BoxDecoration(
                           color: backgroundColor,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: AppColors.borderColor),
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Row(
@@ -559,10 +559,10 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isLulus ? const Color(0xFFDCFCE7) : Colors.white,
+                color: isLulus ? AppColors.paleGreen : AppColors.cardWhite,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: AppColors.cardShadow,
-                border: Border.all(color: isLulus ? const Color(0xFFBBF7D0) : Colors.grey.shade100),
+                border: Border.all(color: isLulus ? AppColors.paleGreen : AppColors.borderColor),
               ),
               child: Row(
                 children: [
@@ -646,9 +646,9 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: active ? primaryBlue : Colors.white,
+          color: active ? primaryBlue : AppColors.cardWhite,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: active ? primaryBlue : Colors.grey.shade200),
+          border: Border.all(color: active ? primaryBlue : AppColors.borderColor),
         ),
         child: Center(
           child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: active ? Colors.white : darkNavy)),
@@ -662,7 +662,7 @@ class _DetailKelasPageState extends State<DetailKelasPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+        color: isActive ? AppColors.paleGreen : AppColors.surfaceGray,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

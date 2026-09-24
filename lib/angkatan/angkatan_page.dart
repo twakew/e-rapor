@@ -26,7 +26,7 @@ class _AngkatanPageState extends State<AngkatanPage> {
   String _userRole = 'User';
 
   // Project Palette
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color primaryBlue = AppColors.secondary;
   final Color darkNavy = AppColors.textDark;
   final Color backgroundColor = AppColors.backgroundColor;
@@ -605,7 +605,7 @@ class _AngkatanDetailSheetState extends State<_AngkatanDetailSheet> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         decoration: BoxDecoration(
-          color: sel ? const Color(0xFF2563EB) : Colors.white,
+          color: sel ? AppColors.brand : AppColors.cardWhite,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: sel ? const Color(0xFF2563EB) : widget.borderColor),
           boxShadow: sel ? [BoxShadow(color: Color(0xFF2563EB).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))] : null,

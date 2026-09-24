@@ -61,7 +61,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
   final apiService = ApiService();
 
   // --- Palette (Using central AppColors) ---
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color backgroundColor = AppColors.backgroundColor;
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
@@ -352,7 +352,7 @@ class _TambahSiswaPageState extends State<TambahSiswaPage> {
             height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isCompleted || isActive ? primaryTeal : Colors.white,
+              color: isCompleted || isActive ? primaryTeal : AppColors.cardWhite,
               border: Border.all(color: isCompleted || isActive ? primaryTeal : borderColor, width: 2),
             ),
             child: Center(

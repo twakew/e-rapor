@@ -298,7 +298,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -327,9 +327,9 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
               ),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textMuted,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -349,8 +349,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         style: const TextStyle(fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Cari nama atau email...',
-          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 20),
+          hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
+          prefixIcon: Icon(Icons.search_rounded, color: AppColors.textMuted, size: 20),
           filled: true,
           fillColor: AppColors.backgroundColor,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -360,7 +360,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Color(0xFFF1F5F9)),
+            borderSide: BorderSide(color: AppColors.borderColor),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -376,7 +376,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person_search_rounded, size: 80, color: Colors.grey[300]),
+          Icon(Icons.person_search_rounded, size: 80, color: AppColors.textMuted),
           const SizedBox(height: 16),
           Text(
             'Akun tidak ditemukan',
@@ -457,7 +457,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                       const SizedBox(width: 8),
                       Text(
                         'Daftar: $date',
-                        style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                        style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                       ),
                     ],
                   ),

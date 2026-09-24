@@ -60,7 +60,7 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
   String _selectedWaliKelas = 'Bukan Wali Kelas';
   String _selectedAngkatanWali = '-';
   String _selectedRombelWali = '-';
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color backgroundColor = AppColors.backgroundColor;
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
@@ -463,7 +463,7 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
             height: 38,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isCompleted || isActive ? primaryTeal : const Color(0xFFF1F5F9),
+              color: isCompleted || isActive ? primaryTeal : AppColors.surfaceGray,
               border: Border.all(
                 color: isCompleted || isActive ? primaryTeal : borderColor,
                 width: 2,

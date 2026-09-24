@@ -27,7 +27,7 @@ class _TambahKelasPageState extends State<TambahKelasPage> {
   Map<String, dynamic>? _selectedTeacher;
   bool _isFetchingTeachers = true;
 
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color backgroundColor = AppColors.backgroundColor;
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;

@@ -20,7 +20,7 @@ class DataKelasPage extends StatefulWidget {
 
 class _DataKelasPageState extends State<DataKelasPage> {
   // Colors
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color backgroundColor = AppColors.backgroundColor;
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
@@ -319,8 +319,8 @@ class _DataKelasPageState extends State<DataKelasPage> {
                     hintText: 'Cari kelas, rombel, angkatan atau wali...',
                     hintStyle: TextStyle(fontSize: 13, color: textMuted),
                     prefixIcon: Icon(Icons.search_rounded, color: textMuted, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade100)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.borderColor)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.borderColor)),
                     isDense: true,
                   ),
                 ),
@@ -380,7 +380,7 @@ class _DataKelasPageState extends State<DataKelasPage> {
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -406,7 +406,7 @@ class _DataKelasPageState extends State<DataKelasPage> {
         foregroundColor: textDark,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: AppColors.borderColor),
       ),
     );
   }
@@ -626,7 +626,7 @@ class _DataKelasPageState extends State<DataKelasPage> {
       child: Container(
         padding: const EdgeInsets.all(16), // Reduced from 20
         decoration: BoxDecoration(
-          color: isLulus ? const Color(0xFFF0FDF4) : Colors.white,
+          color: isLulus ? AppColors.paleGreen : AppColors.cardWhite,
           borderRadius: BorderRadius.circular(20),
           border: isLulus ? Border.all(color: Colors.green.withValues(alpha: 0.2), width: 1) : null,
           boxShadow: [
@@ -673,7 +673,7 @@ class _DataKelasPageState extends State<DataKelasPage> {
               child: _cardInfoRow(Icons.person_rounded, 'Wali', item['wali'], primaryTeal),
             ),
             const Spacer(),
-            Divider(color: Colors.grey.shade50, height: 1),
+            Divider(color: AppColors.textMuted, height: 1),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -719,11 +719,11 @@ class _DataKelasPageState extends State<DataKelasPage> {
     bool isActive = status.toLowerCase() == 'aktif';
     bool isLulus = status.toLowerCase() == 'lulus';
     
-    Color bgColor = const Color(0xFFF1F5F9);
+    Color bgColor = AppColors.surfaceGray;
     Color textColor = textSecondary;
 
     if (isActive) {
-      bgColor = const Color(0xFFDCFCE7);
+      bgColor = AppColors.paleGreen;
       textColor = const Color(0xFF15803D);
     } else if (isLulus) {
       bgColor = Colors.green.shade100;

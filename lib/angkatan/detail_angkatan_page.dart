@@ -27,7 +27,7 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
   List<dynamic> _allStudents = [];
   List<dynamic> _filteredStudents = [];
 
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color primaryBlue = AppColors.secondary;
   final Color darkNavy = AppColors.textDark;
   final Color backgroundColor = AppColors.backgroundColor;
@@ -297,7 +297,7 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: sel ? primaryBlue : Colors.white,
+          color: sel ? primaryBlue : AppColors.cardWhite,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: sel ? primaryBlue : borderColor),
         ),
@@ -366,7 +366,7 @@ class _DetailAngkatanPageState extends State<DetailAngkatanPage> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isLulus ? const Color(0xFFDCFCE7) : Colors.white,
+          color: isLulus ? AppColors.paleGreen : AppColors.cardWhite,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isLulus ? const Color(0xFFBBF7D0) : borderColor.withValues(alpha: 0.5)),
           boxShadow: AppColors.cardShadow,

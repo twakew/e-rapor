@@ -231,12 +231,12 @@ class _PenilaianPageState extends State<PenilaianPage> {
                   decoration: BoxDecoration(
                     color: AppColors.cardWhite,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: AppColors.borderColor),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, size: 18, color: Color(0xFF94A3B8)),
+                      Icon(Icons.search, size: 18, color: AppColors.textMuted),
                       const SizedBox(width: 12),
                       Expanded(
                         child: TextField(
@@ -244,7 +244,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
                           onChanged: _filterSearch,
                           decoration: InputDecoration(
                             hintText: _isMobile ? 'Cari...' : 'Cari nama siswa atau NIS...',
-                            hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                            hintStyle: TextStyle(fontSize: 13, color: AppColors.textMuted),
                             border: InputBorder.none,
                             isDense: true,
                           ),
@@ -323,7 +323,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        side: BorderSide(color: Colors.grey.shade100),
+        side: BorderSide(color: AppColors.borderColor),
         backgroundColor: AppColors.backgroundColor,
       ),
       child: Row(
@@ -347,13 +347,13 @@ class _PenilaianPageState extends State<PenilaianPage> {
         decoration: BoxDecoration(
           color: AppColors.backgroundColor,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade100),
+          border: Border.all(color: AppColors.borderColor),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
             value: selectedValue,
             isExpanded: true,
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF94A3B8)),
+            icon: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppColors.textMuted),
             style: TextStyle(fontSize: 12, color: AppColors.textDark, fontWeight: FontWeight.w600),
             items: items.map((String value) {
               return DropdownMenuItem<String>(
@@ -458,7 +458,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
               ],
         border: desktop
             ? Border(bottom: BorderSide(color: AppColors.borderColor))
-            : Border.all(color: isDone ? const Color(0xFFDCFCE7) : Color(0xFFF1F5F9), width: 1.2),
+            : Border.all(color: isDone ? AppColors.paleGreen : AppColors.borderColor, width: 1.2),
       ),
       child: ClipRRect(
         borderRadius: desktop ? BorderRadius.zero : BorderRadius.circular(20),
@@ -570,7 +570,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
                                 borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
                                   value: prog, 
-                                  backgroundColor: const Color(0xFFF1F5F9), 
+                                  backgroundColor: AppColors.surfaceGray, 
                                   color: isDone ? colorBSB : primaryGreen, 
                                   minHeight: 4
                                 ),

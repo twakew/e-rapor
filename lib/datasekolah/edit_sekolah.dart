@@ -30,7 +30,7 @@ class _EditSekolahPageState extends State<EditSekolahPage> {
   final apiService = ApiService();
 
   // --- Theme Colors ---
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color textDark = AppColors.textDark;
   final Color bgLight = AppColors.backgroundColor;
   final Color borderColor = AppColors.borderColor;
@@ -116,7 +116,7 @@ class _EditSekolahPageState extends State<EditSekolahPage> {
         ? null 
         : AppBar(
             title: const Text('Edit Profil Sekolah', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.cardWhite,
             foregroundColor: primaryTeal,
             elevation: 0,
             centerTitle: false,
@@ -306,7 +306,7 @@ class _EditSekolahPageState extends State<EditSekolahPage> {
           hintText: hint,
           prefixIcon: Icon(icon, color: primaryTeal, size: 20),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.backgroundColor,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: primaryTeal, width: 2)),

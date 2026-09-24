@@ -319,14 +319,14 @@ class _DokumentasiPageState extends State<DokumentasiPage> {
                       )
                     : imageUrl.isEmpty
                     ? Container(
-                        color: Colors.grey[200],
+                        color: AppColors.textMuted,
                         child: Icon(Icons.image_outlined, size: 48, color: textMuted),
                       )
                     : Image.network(
                         imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[200],
+                          color: AppColors.textMuted,
                           child: Icon(Icons.broken_image_outlined, size: 32, color: textMuted),
                         ),
                       ),

@@ -24,7 +24,7 @@ class _DataSekolahPageState extends State<DataSekolahPage> {
   String _userRole = 'User';
 
   // --- Color Palette ---
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color surfaceColor = Colors.white;
   final Color scaffoldBg = AppColors.backgroundColor;
   final Color textHighlight = AppColors.textDark;
@@ -312,7 +312,7 @@ class _DataSekolahPageState extends State<DataSekolahPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
+                        color: AppColors.paleGreen,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(

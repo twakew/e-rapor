@@ -18,7 +18,7 @@ class DataGuruPage extends StatefulWidget {
 
 class _DataGuruPageState extends State<DataGuruPage> {
   // --- Color Palette ---
-  final Color primaryTeal = AppColors.primary; 
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary; 
   final Color backgroundColor = AppColors.backgroundColor;
   final Color textDark = AppColors.textDark;
   final Color textSecondary = AppColors.textSecondary;
@@ -294,7 +294,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: AppColors.borderColor),
         backgroundColor: AppColors.cardWhite,
       ),
     );
@@ -307,9 +307,9 @@ class _DataGuruPageState extends State<DataGuruPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: isPrimary ? primaryTeal : Colors.white,
+          color: isPrimary ? primaryTeal : AppColors.cardWhite,
           borderRadius: BorderRadius.circular(12),
-          border: isPrimary ? null : Border.all(color: Colors.grey.shade200),
+          border: isPrimary ? null : Border.all(color: AppColors.borderColor),
           boxShadow: [
             BoxShadow(
               color: isPrimary 
@@ -366,19 +366,19 @@ class _DataGuruPageState extends State<DataGuruPage> {
                   decoration: BoxDecoration(
                     color: AppColors.cardWhite,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: AppColors.borderColor),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, size: 18, color: Color(0xFF94A3B8)),
+                      Icon(Icons.search, size: 18, color: AppColors.textMuted),
                       const SizedBox(width: 12),
                       Expanded(
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
                             hintText: isMobile ? 'Cari...' : 'Cari nama guru, NIP, atau mata pelajaran...',
-                            hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                            hintStyle: TextStyle(fontSize: 13, color: AppColors.textMuted),
                             border: InputBorder.none,
                             isDense: true,
                           ),
@@ -458,13 +458,13 @@ class _DataGuruPageState extends State<DataGuruPage> {
         decoration: BoxDecoration(
           color: AppColors.backgroundColor,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade100),
+          border: Border.all(color: AppColors.borderColor),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
             value: selectedValue,
             isExpanded: true,
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF94A3B8)),
+            icon: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppColors.textMuted),
             style: TextStyle(fontSize: 12, color: AppColors.textDark, fontWeight: FontWeight.w600),
             items: items.map((String value) {
               return DropdownMenuItem<String>(
@@ -662,7 +662,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))
         ],
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Material(
         color: Colors.transparent,
@@ -743,7 +743,7 @@ class _DataGuruPageState extends State<DataGuruPage> {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        side: BorderSide(color: Colors.grey.shade100),
+        side: BorderSide(color: AppColors.borderColor),
         backgroundColor: AppColors.backgroundColor,
       ),
       child: Row(

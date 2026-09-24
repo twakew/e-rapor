@@ -373,7 +373,7 @@ class _DasbhorPageState extends State<DasbhorPage> {
           Container(
             height: 24,
             width: 1,
-            color: Colors.grey.shade200,
+            color: AppColors.textMuted,
           ),
           const SizedBox(width: 16),
           _buildUserSection(name),

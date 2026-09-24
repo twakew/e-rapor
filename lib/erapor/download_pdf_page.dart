@@ -39,7 +39,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
   int _pbSemester = 1;
 
   // Modern Color Palette
-  final Color primaryTeal = AppColors.primary;
+  Color get primaryTeal => AppColors.isDark ? AppColors.brand : AppColors.primary;
   final Color bgColor = AppColors.backgroundColor;
 
   @override
@@ -365,7 +365,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.borderColor, borderRadius: BorderRadius.circular(10)))),
                 const SizedBox(height: 24),
                 Text('Kirim Rapor ke User', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryTeal)),
                 const SizedBox(height: 8),
@@ -493,7 +493,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.borderColor, borderRadius: BorderRadius.circular(10)))),
                 const SizedBox(height: 24),
                 Text('Pilih Kelompok Download', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryTeal)),
                 const SizedBox(height: 8),
@@ -556,7 +556,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
       decoration: BoxDecoration(
         color: AppColors.backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -651,7 +651,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
           ),
           trailing: _isSelectionMode 
               ? null 
-              : Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey[400]),
+              : Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
           onLongPress: () {
             if (widget.userRole != 'User') _toggleSelection(studentId);
           },
@@ -698,7 +698,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
           const SizedBox(height: 8),
           Text(
             'Silakan input nilai siswa terlebih dahulu.',
-            style: TextStyle(color: Colors.grey[500], fontSize: 14),
+            style: TextStyle(color: AppColors.textMuted, fontSize: 14),
           ),
           const SizedBox(height: 24),
           TextButton.icon(
