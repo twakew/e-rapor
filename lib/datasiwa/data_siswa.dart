@@ -239,7 +239,23 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Data Siswa', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textDark)),
+        Row(
+          children: [
+            Text('Data Siswa', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textDark)),
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.paleBlue,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '${_filtered.length} dari ${_all.length} data',
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -281,7 +297,7 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
                   backgroundColor: primaryTeal,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                 ),
               ),
@@ -298,7 +314,7 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
       label: Text(label, style: TextStyle(color: textDark, fontWeight: FontWeight.w500)),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         side: BorderSide(color: Colors.grey.shade200),
       ),
     );
@@ -380,15 +396,10 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
     return Container(
       padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          )
-        ],
+        border: Border.all(color: AppColors.borderColor),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         children: [
@@ -499,7 +510,7 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         side: BorderSide(color: Colors.grey.shade100),
         backgroundColor: AppColors.backgroundColor,
       ),
@@ -547,10 +558,187 @@ class _DataSiswaPageState extends State<DataSiswaPage> {
   }
 
   Widget _buildDataTableCard() {
-    return Column(
-      children: [
-        ..._filtered.map((s) => _buildStudentMobileCard(s)),
-      ],
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    if (isMobile) {
+      return Column(
+        children: [..._filtered.map((s) => _buildStudentMobileCard(s))],
+      );
+    }
+    if (_filtered.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.cardWhite,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderColor),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Text('Belum ada data siswa', style: TextStyle(color: textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
+      );
+    }
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderColor),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        children: [
+          _buildTableHeader(),
+          for (int i = 0; i < _filtered.length; i++) _buildStudentRow(_filtered[i], i),
+        ],
+      ),
+    );
+  }
+
+  Widget _tableCell(String text, int flex, {bool bold = false, Color? color}) {
+    return Expanded(
+      flex: flex,
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+          color: color ?? textSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      color: AppColors.backgroundColor,
+      child: Row(
+        children: [
+          _tableCell('NAMA & NIS', 4, bold: true, color: textMuted),
+          _tableCell('KELAS', 2, bold: true, color: textMuted),
+          _tableCell('ANGKATAN', 2, bold: true, color: textMuted),
+          _tableCell('ROMBEL', 2, bold: true, color: textMuted),
+          _tableCell('STATUS', 2, bold: true, color: textMuted),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'AKSI',
+              textAlign: TextAlign.right,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStudentRow(Map<String, dynamic> s, int index) {
+    return Material(
+      color: AppColors.cardWhite,
+      child: InkWell(
+        onTap: () {
+          if (widget.onNavigate != null) {
+            widget.onNavigate!(15, student: s);
+          } else {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => DetailSiswaPage(student: s, userRole: widget.userRole ?? 'User')));
+          }
+        },
+        hoverColor: AppColors.brandSoft.withValues(alpha: 0.6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.borderColor)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: primaryTeal.withValues(alpha: 0.1),
+                      child: Text(
+                        (s['name'] ?? '?').toString().isNotEmpty ? s['name'].toString()[0].toUpperCase() : '?',
+                        style: TextStyle(color: primaryTeal, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s['name'] ?? '-',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: textDark),
+                          ),
+                          Text(
+                            'NIS: ${s['nis'] ?? '-'}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 11, color: textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _tableCell('${s['class'] ?? '-'}', 2),
+              _tableCell('${s['batch'] ?? '-'}', 2),
+              _tableCell('${s['rombel'] ?? '-'}', 2),
+              Expanded(flex: 2, child: _statusChip('${s['status'] ?? '-'}')),
+              Expanded(
+                flex: 2,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.userRole != 'User')
+                        _actionBtn(Icons.edit_outlined, Colors.blue, onTap: () {
+                          if (widget.onNavigate != null) {
+                            widget.onNavigate!(10, student: s);
+                          } else {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => TambahSiswaPage(student: s)));
+                          }
+                        }),
+                      if (widget.userRole != 'User') const SizedBox(width: 8),
+                      if (widget.userRole != 'User')
+                        _actionBtn(Icons.delete_outline, Colors.red, onTap: () => _deleteStudent(s)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _statusChip(String status) {
+    Color bg = AppColors.backgroundColor;
+    Color fg = textMuted;
+    if (status == 'Aktif') {
+      bg = AppColors.paleGreen;
+      fg = AppColors.paleGreenText;
+    } else if (status == 'Lulus') {
+      bg = AppColors.paleYellow;
+      fg = AppColors.paleYellowText;
+    } else if (status == 'Keluar') {
+      bg = AppColors.paleRed;
+      fg = AppColors.paleRedText;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      child: Text(status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg)),
     );
   }
 
