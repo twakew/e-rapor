@@ -1033,16 +1033,26 @@ class _DasbhorPageState extends State<DasbhorPage> {
         childAspectRatio: isMobile ? 1.7 : 2.4,
       ),
       children: [
-        _buildStatCard(Icons.groups_2_outlined, 'Total Siswa', _totalSiswa, AppColors.paleBlue, AppColors.paleBlueText),
-        _buildStatCard(Icons.badge_outlined, 'Total Guru', _totalGuru, AppColors.paleGreen, AppColors.paleGreenText),
-        _buildStatCard(Icons.meeting_room_outlined, 'Total Kelas', _totalKelas, AppColors.paleYellow, AppColors.paleYellowText),
-        _buildStatCard(Icons.collections_outlined, 'Dokumentasi', _totalDokumentasi, AppColors.paleRed, AppColors.paleRedText),
+        _buildStatCard(Icons.groups_2_outlined, 'Total Siswa', _totalSiswa, AppColors.paleBlue, AppColors.paleBlueText,
+            onTap: () => _handleRestrictedAccess('Data Siswa', 1)),
+        _buildStatCard(Icons.badge_outlined, 'Total Guru', _totalGuru, AppColors.paleGreen, AppColors.paleGreenText,
+            onTap: () => _handleRestrictedAccess('Data Guru', 28)),
+        _buildStatCard(Icons.meeting_room_outlined, 'Total Kelas', _totalKelas, AppColors.paleYellow, AppColors.paleYellowText,
+            onTap: () => _handleRestrictedAccess('Data Kelas', 12)),
+        _buildStatCard(Icons.collections_outlined, 'Dokumentasi', _totalDokumentasi, AppColors.paleRed, AppColors.paleRedText,
+            onTap: () => _handleRestrictedAccess('Dokumentasi', 4)),
       ],
     );
   }
 
-  Widget _buildStatCard(IconData icon, String label, int value, Color bg, Color fg) {
-    return Container(
+  Widget _buildStatCard(IconData icon, String label, int value, Color bg, Color fg, {required VoidCallback onTap}) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        hoverColor: bg.withValues(alpha: 0.5),
+        child: Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
@@ -1077,23 +1087,25 @@ class _DasbhorPageState extends State<DasbhorPage> {
                     letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.5,
+              color: textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
               ],
             ),
           ),
         ],
       ),
-    );
+    ),
+  ),
+  );
   }
 
   bool get isSmallScreen => MediaQuery.of(context).size.width < 600;
