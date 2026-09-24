@@ -246,6 +246,23 @@ class _AngkatanPageState extends State<AngkatanPage> {
   }
 
   Widget _buildGridSection() {
+    if (!_isMobile && _filteredAngkatan.isNotEmpty) {
+      return Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: AppColors.cardWhite,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Column(
+          children: [
+            _buildTableHeader(),
+            for (final data in _filteredAngkatan) _buildAngkatanRow(data),
+          ],
+        ),
+      );
+    }
     if (_filteredAngkatan.isEmpty) {
       return Center(
         child: Column(
@@ -274,6 +291,111 @@ class _AngkatanPageState extends State<AngkatanPage> {
       ),
       itemCount: _filteredAngkatan.length,
       itemBuilder: (context, index) => _buildAngkatanCard(_filteredAngkatan[index]),
+    );
+  }
+
+  Widget _tableCell(String text, int flex, {bool bold = false, Color? color}) {
+    return Expanded(
+      flex: flex,
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+          color: color ?? textSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      color: backgroundColor,
+      child: Row(
+        children: [
+          _tableCell('ANGKATAN', 4, bold: true, color: textMuted),
+          _tableCell('TOTAL SISWA', 2, bold: true, color: textMuted),
+          _tableCell('SISWA AKTIF', 2, bold: true, color: textMuted),
+          _tableCell('ALUMNI', 2, bold: true, color: textMuted),
+          Expanded(
+            flex: 2,
+            child: Text(
+              '',
+              textAlign: TextAlign.right,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAngkatanRow(Map<String, dynamic> data) {
+    final String batch = data['batch'];
+    return Material(
+      color: AppColors.cardWhite,
+      child: InkWell(
+        onTap: () => _showAngkatanDetails(data),
+        hoverColor: AppColors.brandSoft.withValues(alpha: 0.6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: borderColor)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: primaryTeal.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.school_rounded, color: primaryTeal, size: 16),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Angkatan $batch',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: textDark),
+                          ),
+                          Text(
+                            'TK A: ${data['tkA']} • TK B: ${data['tkB']}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 11, color: textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _tableCell('${data['total']}', 2),
+              _tableCell('${data['aktif']}', 2, bold: true, color: primaryTeal),
+              _tableCell('${data['lulus']}', 2, bold: true, color: const Color(0xFF059669)),
+              Expanded(
+                flex: 2,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

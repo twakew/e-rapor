@@ -275,6 +275,17 @@ class _DataKelasPageState extends State<DataKelasPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Data Kelas', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textDark)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.paleBlue,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${_filteredData.length} dari ${_allData.length} data',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.paleBlueText),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -292,8 +303,9 @@ class _DataKelasPageState extends State<DataKelasPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderColor),
         boxShadow: AppColors.cardShadow,
       ),
       child: Column(
@@ -400,6 +412,23 @@ class _DataKelasPageState extends State<DataKelasPage> {
   }
 
   Widget _buildClassGrid() {
+    if (!_isMobile && _filteredData.isNotEmpty) {
+      return Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: AppColors.cardWhite,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderColor),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Column(
+          children: [
+            _buildTableHeader(),
+            for (final item in _filteredData) _buildClassRow(item),
+          ],
+        ),
+      );
+    }
     if (_filteredData.isEmpty) {
       return Center(
         child: Column(
@@ -430,6 +459,161 @@ class _DataKelasPageState extends State<DataKelasPage> {
       itemCount: _filteredData.length,
       itemBuilder: (context, index) => _buildClassCard(_filteredData[index]),
     );
+  }
+
+  Widget _tableCell(String text, int flex, {bool bold = false, Color? color}) {
+    return Expanded(
+      flex: flex,
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+          color: color ?? textSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      color: backgroundColor,
+      child: Row(
+        children: [
+          _tableCell('KELAS', 4, bold: true, color: textMuted),
+          _tableCell('ROMBEL', 2, bold: true, color: textMuted),
+          _tableCell('ANGKATAN', 2, bold: true, color: textMuted),
+          _tableCell('WALI KELAS', 3, bold: true, color: textMuted),
+          _tableCell('SISWA', 2, bold: true, color: textMuted),
+          _tableCell('STATUS', 2, bold: true, color: textMuted),
+          Expanded(
+            flex: 1,
+            child: Text(
+              '',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClassRow(Map<String, dynamic> item) {
+    final bool hasWali = item['wali_list'] != null && (item['wali_list'] as List).isNotEmpty;
+    return Material(
+      color: AppColors.cardWhite,
+      child: InkWell(
+        onTap: () => _showClassDetails(item),
+        hoverColor: AppColors.brandSoft.withValues(alpha: 0.6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.borderColor)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: primaryTeal.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.meeting_room_rounded, color: primaryTeal, size: 16),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['kelas'],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: textDark),
+                          ),
+                          Text(
+                            item['tingkat'],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 11, color: textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _tableCell('${item['rombel']}', 2),
+              _tableCell('${item['angkatan']}', 2),
+              Expanded(
+                flex: 3,
+                child: InkWell(
+                  onTap: hasWali ? () => _openWali(item) : null,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Text(
+                    '${item['wali']}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: hasWali ? primaryTeal : textMuted,
+                    ),
+                  ),
+                ),
+              ),
+              _tableCell('${item['siswa']} siswa', 2),
+              Expanded(flex: 2, child: _statusBadge(item['status'])),
+              Expanded(
+                flex: 1,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openWali(Map<String, dynamic> item) {
+    final list = (item['wali_list'] ?? []) as List;
+    if (list.isEmpty) return;
+    if (list.length == 1) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(teacher: list.first, userRole: widget.userRole)));
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Pilih Wali Kelas', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: list.map((t) => ListTile(
+              leading: CircleAvatar(
+                backgroundColor: primaryTeal.withValues(alpha: 0.1),
+                child: Text(t['name'][0], style: TextStyle(color: primaryTeal, fontWeight: FontWeight.bold)),
+              ),
+              title: Text(t['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(t['role'] ?? 'Guru Kelas'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(teacher: t, userRole: widget.userRole)));
+              },
+            )).toList(),
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildClassCard(Map<String, dynamic> item) {
@@ -484,35 +668,7 @@ class _DataKelasPageState extends State<DataKelasPage> {
             _cardInfoRow(Icons.calendar_today_rounded, 'Angkatan', item['angkatan'], const Color(0xFFF59E0B)),
             const SizedBox(height: 6),
             InkWell(
-              onTap: item['wali_list'] != null && (item['wali_list'] as List).isNotEmpty ? () {
-                final list = item['wali_list'] as List;
-                if (list.length == 1) {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(teacher: list.first, userRole: widget.userRole)));
-                } else {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      title: const Text('Pilih Wali Kelas', style: TextStyle(fontWeight: FontWeight.bold)),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: list.map((t) => ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: primaryTeal.withValues(alpha: 0.1),
-                            child: Text(t['name'][0], style: TextStyle(color: primaryTeal, fontWeight: FontWeight.bold)),
-                          ),
-                          title: Text(t['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(t['role'] ?? 'Guru Kelas'),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuruPage(teacher: t, userRole: widget.userRole)));
-                          },
-                        )).toList(),
-                      ),
-                    ),
-                  );
-                }
-              } : null,
+              onTap: item['wali_list'] != null && (item['wali_list'] as List).isNotEmpty ? () => _openWali(item) : null,
               borderRadius: BorderRadius.circular(4),
               child: _cardInfoRow(Icons.person_rounded, 'Wali', item['wali'], primaryTeal),
             ),
@@ -578,7 +734,7 @@ class _DataKelasPageState extends State<DataKelasPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor, 
-        borderRadius: BorderRadius.circular(8)
+        borderRadius: BorderRadius.circular(999)
       ),
       child: Text(
         status, 
