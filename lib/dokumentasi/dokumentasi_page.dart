@@ -312,7 +312,7 @@ class _DokumentasiPageState extends State<DokumentasiPage> {
                 tag: 'image_${item['id']}',
                 child: isVideo
                     ? Container(
-                        color: Colors.grey[900],
+                        color: AppColors.textDark,
                         child: const Center(
                           child: Icon(Icons.play_circle_fill_rounded, size: 56, color: Colors.white70),
                         ),

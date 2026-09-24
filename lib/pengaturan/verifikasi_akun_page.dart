@@ -183,7 +183,7 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
               children: [
                 if (widget.isEmbedded)
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1E293B), size: 20),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 20),
                     onPressed: () {
                       if (widget.onNavigate != null) widget.onNavigate!(8);
                     },
@@ -202,7 +202,7 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
           ),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)))
+                ? Center(child: CircularProgressIndicator(color: AppColors.brand))
                 : _pendingUsers.isEmpty
                     ? _buildEmptyState()
                     : ListView.builder(
@@ -228,15 +228,15 @@ class _VerifikasiAkunPageState extends State<VerifikasiAkunPage> {
           // Icon Amplop dengan Checkmark (mirip gambar)
           Opacity(
             opacity: 0.2,
-            child: Icon(Icons.mail_outline_rounded, size: 100, color: Colors.grey[600]),
+            child: Icon(Icons.mail_outline_rounded, size: 100, color: AppColors.textMuted),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Tidak ada antrean verifikasi',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF64748B),
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 8),

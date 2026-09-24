@@ -734,8 +734,8 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Colors.black,
+        decoration: BoxDecoration(
+          color: AppColors.textDark,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Stack(
@@ -1051,7 +1051,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                     ),
                     title: Text(
                       _formatDate(data['date']),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B)),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textDark),
                     ),
                     subtitle: Text(
                       "Hadir: ${data['hadir']} • Absen: ${totalStudentsOnDate - data['hadir']}",
@@ -1259,7 +1259,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                       dataRowMaxHeight: 50,
                       headingRowColor: WidgetStateProperty.all(Colors.transparent),
                       columns: [
-                        const DataColumn(label: SizedBox(width: 120, child: Text('Nama Siswa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1E293B))))),
+                        DataColumn(label: SizedBox(width: 120, child: Text('Nama Siswa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textDark)))),
                         ...List.generate(daysInMonth, (index) {
                           final day = index + 1;
                           final date = DateTime(_monitoringYear, _monitoringMonth, day);
@@ -1280,7 +1280,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                       rows: studentsInClass.map((s) {
                         return DataRow(
                           cells: [
-                            DataCell(SizedBox(width: 120, child: Text(s['name'], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)), overflow: TextOverflow.ellipsis))),
+                            DataCell(SizedBox(width: 120, child: Text(s['name'], style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary), overflow: TextOverflow.ellipsis))),
                             ...List.generate(daysInMonth, (index) {
                               final day = index + 1;
                               final date = DateTime(_monitoringYear, _monitoringMonth, day);
@@ -1359,7 +1359,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
           ? Icon(icon, size: 12, color: color)
           : Text(text!, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10)),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+        Text(label, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
       ],
     );
   }
@@ -1463,11 +1463,11 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.picture_as_pdf_rounded, size: 80, color: Color(0xFFEF4444)),
+              Icon(Icons.picture_as_pdf_rounded, size: 80, color: AppColors.errorRed),
               const SizedBox(height: 24),
               const Text("Export Rekap Absensi", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
               const SizedBox(height: 12),
-              Text("Unduh laporan bulanan untuk ${_selectedClass == 'Semua Kelas' ? 'Semua Kelas' : 'Kelas $_selectedClass'} ${_selectedRombel == 'Semua Rombel' ? '' : _selectedRombel} periode $_monitoringMonth/$_monitoringYear.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+              Text("Unduh laporan bulanan untuk ${_selectedClass == 'Semua Kelas' ? 'Semua Kelas' : 'Kelas $_selectedClass'} ${_selectedRombel == 'Semua Rombel' ? '' : _selectedRombel} periode $_monitoringMonth/$_monitoringYear.", textAlign: TextAlign.center, style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 onPressed: _showExportOptions, 
@@ -1509,9 +1509,9 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Cetak Laporan PDF", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Color(0xFF0F172A))),
+                  Text("Cetak Laporan PDF", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: AppColors.textDark)),
                   const SizedBox(height: 8),
-                  Text("Pilih periode dan kelas untuk rekapitulasi siswa.", style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+                  Text("Pilih periode dan kelas untuk rekapitulasi siswa.", style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
                   const SizedBox(height: 24),
                   
                   _dlLabel("Pilih Angkatan"),
@@ -1883,7 +1883,7 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
               title: Text(student['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               subtitle: Text(
                 "${student['class'] ?? '-'} • ${student['rombel'] ?? '-'}",
-                style: TextStyle(fontSize: 12, color: Colors.grey[600])
+                style: TextStyle(fontSize: 12, color: AppColors.textMuted)
               ),
               trailing: _statusChip(status),
             ),
@@ -1910,14 +1910,14 @@ class _AbsensiPageState extends State<AbsensiPage> with SingleTickerProviderStat
   }
 
   Widget _optionBtn(String label, Color color, bool isSelected, VoidCallback onTap) {
-    return Expanded(child: GestureDetector(onTap: onTap, child: Container(margin: const EdgeInsets.symmetric(horizontal: 4), padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: isSelected ? color : bgColor, borderRadius: BorderRadius.circular(12)), child: Center(child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.grey[600]))))));
+    return Expanded(child: GestureDetector(onTap: onTap, child: Container(margin: const EdgeInsets.symmetric(horizontal: 4), padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: isSelected ? color : bgColor, borderRadius: BorderRadius.circular(12)), child: Center(child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : AppColors.textMuted))))));
   }
 
   Widget _buildEmptyState() {
     return Padding(padding: const EdgeInsets.symmetric(vertical: 60), child: Column(children: [Icon(Icons.people_outline_rounded, size: 64, color: Colors.grey[200]), const SizedBox(height: 16), Text(_isLoading ? "Memuat..." : "Siswa tidak ditemukan", style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold))]));
   }
 
-  Widget _dlLabel(String text) => Padding(padding: const EdgeInsets.only(left: 4, bottom: 8), child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B))));
+  Widget _dlLabel(String text) => Padding(padding: const EdgeInsets.only(left: 4, bottom: 8), child: Text(text, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark)));
 
   Widget _buildBottomSaveButton() {
     if (_isMobile) {

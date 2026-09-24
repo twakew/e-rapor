@@ -165,7 +165,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
                 CircularProgressIndicator(color: primaryTeal),
                 const SizedBox(height: 20),
                 const Text('Menyiapkan PDF...', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text('Mohon tunggu sebentar', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                Text('Mohon tunggu sebentar', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -369,7 +369,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
                 const SizedBox(height: 24),
                 Text('Kirim Rapor ke User', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryTeal)),
                 const SizedBox(height: 8),
-                Text('Rapor yang dikirim akan dapat dilihat oleh Siswa/Orang Tua.', style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                Text('Rapor yang dikirim akan dapat dilihat oleh Siswa/Orang Tua.', style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
                 const SizedBox(height: 24),
 
                 _dlLabel('Angkatan'),
@@ -497,7 +497,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
                 const SizedBox(height: 24),
                 Text('Pilih Kelompok Download', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryTeal)),
                 const SizedBox(height: 8),
-                Text('Download semua PDF rapor berdasarkan filter di bawah ini.', style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                Text('Download semua PDF rapor berdasarkan filter di bawah ini.', style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
                 const SizedBox(height: 24),
 
                 _dlLabel('Angkatan'),
@@ -548,7 +548,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
     );
   }
 
-  Widget _dlLabel(String text) => Padding(padding: const EdgeInsets.only(left: 4, bottom: 8), child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B))));
+  Widget _dlLabel(String text) => Padding(padding: const EdgeInsets.only(left: 4, bottom: 8), child: Text(text, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark)));
 
   Widget _dlDropdown(List<String> items, String value, ValueChanged<String?> onChanged) {
     return Container(
@@ -603,7 +603,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected ? Colors.white : AppColors.textMuted,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
@@ -647,7 +647,7 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
           ),
           subtitle: Text(
             'Kelas: ${student['class'] ?? '-'} | ${assessments.length} Penilaian',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
           trailing: _isSelectionMode 
               ? null 
@@ -691,9 +691,9 @@ class _DownloadPdfPageState extends State<DownloadPdfPage> {
             child: Icon(Icons.description_outlined, size: 64, color: primaryTeal.withValues(alpha: 0.2)),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Belum ada nilai yang tersimpan', 
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF64748B))
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textSecondary)
           ),
           const SizedBox(height: 8),
           Text(

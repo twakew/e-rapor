@@ -242,7 +242,7 @@ class _DetailRaporPageState extends State<DetailRaporPage> {
           if (_isPrinting)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Color(0xFF0D9488), strokeWidth: 2))),
+              child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.brand, strokeWidth: 2))),
             )
           else if (widget.userRole != 'User')
             IconButton(

@@ -281,7 +281,7 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
 
   Widget _buildVideoPreview() {
     return Container(
-      color: Colors.black,
+      color: AppColors.textDark,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -306,7 +306,7 @@ class _EditDokumentasiPageState extends State<EditDokumentasiPage> {
 
   Widget _buildExistingVideoBadge() {
     return Container(
-      color: Colors.black,
+      color: AppColors.textDark,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

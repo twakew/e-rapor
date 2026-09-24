@@ -170,7 +170,7 @@ class _ProfilPageState extends State<ProfilPage> {
                 children: [
                   if (widget.isEmbedded)
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1E293B), size: 20),
+                      icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 20),
                       onPressed: () {
                         if (widget.onNavigate != null) widget.onNavigate!(widget.returnIndex);
                       },
@@ -278,10 +278,10 @@ class _ProfilPageState extends State<ProfilPage> {
               children: [
                 Text(
                   (_userData?['name'] ?? '-').toString().toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
+                    color: AppColors.textDark,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -296,12 +296,12 @@ class _ProfilPageState extends State<ProfilPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.verified_rounded, size: 14, color: Color(0xFF22C55E)),
+                      Icon(Icons.verified_rounded, size: 14, color: AppColors.successGreen),
                       const SizedBox(width: 6),
                       Text(
                         _role ?? 'User',
-                        style: const TextStyle(
-                          color: Color(0xFF15803D),
+                        style: TextStyle(
+                          color: AppColors.successGreen,
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
                         ),
@@ -344,9 +344,9 @@ class _ProfilPageState extends State<ProfilPage> {
           const SizedBox(width: 8),
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF475569),
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -412,7 +412,7 @@ class _ProfilPageState extends State<ProfilPage> {
             child: Icon(icon, size: 18, color: color),
           ),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+          Text(value, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textDark),
               textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
           Text(label, style: const TextStyle(fontSize: 9, color: Color(0xFF94A3B8))),
@@ -502,9 +502,9 @@ class _ProfilPageState extends State<ProfilPage> {
                     ? Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(color: accentGreen, borderRadius: BorderRadius.circular(8)),
-                        child: Text(value, style: const TextStyle(color: Color(0xFF15803D), fontSize: 12, fontWeight: FontWeight.bold)),
+                        child: Text(value, style: TextStyle(color: AppColors.successGreen, fontSize: 12, fontWeight: FontWeight.bold)),
                       )
-                    : Text(value, style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w600)),
+                    : Text(value, style: TextStyle(fontSize: 14, color: AppColors.textDark, fontWeight: FontWeight.w600)),
               ],
             ),
           ),

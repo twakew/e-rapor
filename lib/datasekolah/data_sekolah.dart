@@ -317,7 +317,7 @@ class _DataSekolahPageState extends State<DataSekolahPage> {
                       ),
                       child: Text(
                         value ?? '-',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF15803D)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.successGreen),
                       ),
                     )
                   else

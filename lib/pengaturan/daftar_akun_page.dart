@@ -184,7 +184,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
+            child: Text('Batal', style: TextStyle(color: AppColors.textMuted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -217,7 +217,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
               children: [
                 if (widget.isEmbedded)
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1E293B), size: 20),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 20),
                     onPressed: () {
                       if (widget.onNavigate != null) widget.onNavigate!(8);
                     },
@@ -380,7 +380,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
           const SizedBox(height: 16),
           Text(
             'Akun tidak ditemukan',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textMuted),
           ),
         ],
       ),
@@ -430,10 +430,10 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                       Flexible(
                         child: Text(
                           fullName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textDark,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -447,7 +447,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                   const SizedBox(height: 2),
                   Text(
                     email,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),

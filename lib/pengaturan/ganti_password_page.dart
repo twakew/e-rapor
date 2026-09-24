@@ -76,7 +76,7 @@ class _GantiPasswordPageState extends State<GantiPasswordPage> {
                   children: [
                     if (widget.isEmbedded)
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1E293B), size: 20),
+                        icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 20),
                         onPressed: () {
                           if (widget.onNavigate != null) widget.onNavigate!(8);
                         },

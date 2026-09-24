@@ -433,7 +433,7 @@ class _AngkatanPageState extends State<AngkatanPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(color: Color(0xFF10B981).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-                    child: Text(batch, style: const TextStyle(color: Color(0xFF059669), fontWeight: FontWeight.bold, fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    child: Text(batch, style: TextStyle(color: AppColors.successGreen, fontWeight: FontWeight.bold, fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ),
                 ),
               ],

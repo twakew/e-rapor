@@ -377,7 +377,7 @@ class _TambahGuruPageState extends State<TambahGuruPage> {
               children: [
                 Text(
                   widget.teacher != null ? 'Edit Guru' : 'Tambah Guru',
-                  style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 24),
+                  style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 24),
                 ),
               ],
             ),

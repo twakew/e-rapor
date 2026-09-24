@@ -354,7 +354,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
             value: selectedValue,
             isExpanded: true,
             icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF94A3B8)),
-            style: const TextStyle(fontSize: 12, color: Color(0xFF1E293B), fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 12, color: AppColors.textDark, fontWeight: FontWeight.w600),
             items: items.map((String value) {
               return DropdownMenuItem<String>(
                 value: value,

@@ -946,7 +946,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(20)),
-                      child: Text(value?.toString() ?? '-', style: const TextStyle(color: Color(0xFF166534), fontSize: 11, fontWeight: FontWeight.bold)),
+                      child: Text(value?.toString() ?? '-', style: TextStyle(color: AppColors.successGreen, fontSize: 11, fontWeight: FontWeight.bold)),
                     )
                   else if (isTeacher)
                     Row(
@@ -985,7 +985,7 @@ class _DetailSiswaPageState extends State<DetailSiswaPage> with SingleTickerProv
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(20)),
-                      child: Text(value?.toString() ?? '-', style: const TextStyle(color: Color(0xFF166534), fontSize: 11, fontWeight: FontWeight.bold)),
+                      child: Text(value?.toString() ?? '-', style: TextStyle(color: AppColors.successGreen, fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   )
                 : isTeacher 
